@@ -11,5 +11,6 @@ public class  GetAllOutput {
     public static class Directory {
         public int id;
         public String name;
+        public int parentDirectoryId;
     }
 }
