@@ -8,9 +8,9 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 public class Users {
-    private int user_id;
+    private long id;
     private String name;
-    private String first_name;
+    private String firstname;
     private String email_address;
     private String hash_password;
     private LocalDateTime created_at;

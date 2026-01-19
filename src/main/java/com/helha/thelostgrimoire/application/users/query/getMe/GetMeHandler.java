@@ -35,4 +35,3 @@ public class GetMeHandler implements IQueryHandler<GetMeOutput> {
         return output;
     }
 }
-
