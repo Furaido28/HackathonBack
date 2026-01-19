@@ -3,20 +3,21 @@ package com.helha.thelostgrimoire.application.users.command.register;
 
 import com.helha.thelostgrimoire.application.utils.ICommandHandler;
 import com.helha.thelostgrimoire.infrastructure.users.DbUsers;
-import com.helha.thelostgrimoire.infrastructure.users.IUserRepository;
+import com.helha.thelostgrimoire.infrastructure.users.IUsersRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-@Component
+@Service
 public class RegisterHandler implements ICommandHandler<RegisterInput, RegisterOutput> {
 
-    private final IUserRepository repository;
+    private final IUsersRepository repository;
     private final PasswordEncoder encoder;
 
-    public RegisterHandler(IUserRepository repository, PasswordEncoder encoder) {
+    public RegisterHandler(IUsersRepository repository, PasswordEncoder encoder) {
         this.repository = repository;
         this.encoder = encoder;
     }
