@@ -7,11 +7,10 @@ import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
-public class User {
-    private int user_id;
+public class Notes {
+    private int id;
     private String name;
-    private String first_name;
-    private String email_address;
-    private String hash_password;
+    private String content;
     private LocalDateTime created_at;
+    private LocalDateTime updated_at;
 }

@@ -1,18 +1,15 @@
 package com.helha.thelostgrimoire.controllers.users;
 
-import com.helha.thelostgrimoire.application.users.UsersCommandProcessor;
-import com.helha.thelostgrimoire.application.users.command.login.LoginHandler;
+import com.helha.thelostgrimoire.application.users.command.UsersCommandProcessor;
 import com.helha.thelostgrimoire.application.users.command.login.LoginInput;
 import com.helha.thelostgrimoire.application.users.command.register.RegisterInput;
 import com.helha.thelostgrimoire.application.users.command.register.RegisterOutput;
-import com.helha.thelostgrimoire.domain.User;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
-import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

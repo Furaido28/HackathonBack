@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class Directory {
+public class Directories {
     private int id;
     private String name;
 }
