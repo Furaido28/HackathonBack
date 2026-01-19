@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 @Component
-public class RegisterHandler implements ICommandHandler<RegisterInput, Long> {
+public class RegisterHandler implements ICommandHandler<RegisterInput, RegisterOutput> {
 
     private final IUserRepository repository;
     private final PasswordEncoder encoder;
@@ -23,7 +23,7 @@ public class RegisterHandler implements ICommandHandler<RegisterInput, Long> {
 
     @Override
     @Transactional
-    public Long handle(RegisterInput input) {
+    public RegisterOutput handle(RegisterInput input) {
 
         validate(input);
 
@@ -43,7 +43,11 @@ public class RegisterHandler implements ICommandHandler<RegisterInput, Long> {
         // Save → retourne un DbUsers avec id généré
         DbUsers saved = repository.save(newUser);
 
-        return saved.id;
+        RegisterOutput output = new RegisterOutput();
+        output.id = saved.id;
+        output.email = saved.emailAddress;
+
+        return output;
     }
 
     private void validate(RegisterInput input) {
