@@ -1,4 +1,4 @@
-package com.helha.thelostgrimoire.application.users;
+package com.helha.thelostgrimoire.application.users.command;
 
 import com.helha.thelostgrimoire.application.users.command.login.LoginHandler;
 import com.helha.thelostgrimoire.application.users.command.register.RegisterHandler;
