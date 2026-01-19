@@ -3,6 +3,7 @@ package com.helha.thelostgrimoire.controllers.users;
 import com.helha.thelostgrimoire.application.users.UsersCommandProcessor;
 import com.helha.thelostgrimoire.application.users.command.login.LoginHandler;
 import com.helha.thelostgrimoire.application.users.command.login.LoginInput;
+import com.helha.thelostgrimoire.application.users.command.register.RegisterInput;
 import com.helha.thelostgrimoire.domain.User;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,13 @@ public class UserCommandController {
     public ResponseEntity<Void> login(@Valid @RequestBody LoginInput input) {
 
        usersCommandProcessor.loginHandler.handle(input);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<Void> register(@Valid @RequestBody RegisterInput input) {
+        usersCommandProcessor.registerHandler.handle(input);
 
         return ResponseEntity.ok().build();
     }
