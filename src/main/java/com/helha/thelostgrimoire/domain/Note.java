@@ -13,5 +13,4 @@ public class Note {
     private String content;
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
-
 }
