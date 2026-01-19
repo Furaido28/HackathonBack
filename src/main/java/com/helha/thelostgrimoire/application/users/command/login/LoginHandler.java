@@ -2,16 +2,16 @@ package com.helha.thelostgrimoire.application.users.command.login;
 
 import com.helha.thelostgrimoire.application.utils.IEffectCommandHandler;
 import com.helha.thelostgrimoire.infrastructure.users.DbUsers;
-import com.helha.thelostgrimoire.infrastructure.users.IUsersRepository;
+import com.helha.thelostgrimoire.infrastructure.users.IUserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class LoginHandler implements IEffectCommandHandler<LoginInput> {
-    private IUsersRepository userRepository;
+    private IUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public LoginHandler(IUsersRepository userRepository,
+    public LoginHandler(IUserRepository userRepository,
                         PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;

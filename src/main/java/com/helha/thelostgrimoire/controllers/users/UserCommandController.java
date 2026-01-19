@@ -30,19 +30,28 @@ public class UserCommandController {
     }
 
     @PostMapping("/login")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    headers = @Header(
+                            name = "Users Login",
+                            description = "Users connected"
+                    )
+            ),
+            @ApiResponse(responseCode = "400",
+                    content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
     public ResponseEntity<Void> login(@Valid @RequestBody LoginInput input) {
-
        usersCommandProcessor.loginHandler.handle(input);
 
-        return ResponseEntity.ok().build();
+       return ResponseEntity.ok().build();
     }
 
     @PostMapping("/register")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201",
                     headers = @Header(
-                            name = "User Register",
-                            description = "User created"
+                            name = "Users Register",
+                            description = "Users created"
                     )
             ),
             @ApiResponse(responseCode = "400",
