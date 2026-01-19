@@ -1,5 +1,6 @@
 package com.helha.thelostgrimoire.application.users.query.getMe;
 
+import com.helha.thelostgrimoire.application.utils.CurrentUserContext;
 import com.helha.thelostgrimoire.application.utils.IQueryHandler;
 import com.helha.thelostgrimoire.infrastructure.users.IUsersRepository;
 import com.helha.thelostgrimoire.infrastructure.users.DbUsers;
@@ -17,10 +18,7 @@ public class GetMeHandler implements IQueryHandler<GetMeOutput> {
     @Override
     public GetMeOutput handle() {
 
-        // TODO à adapter après JWT
-//        Long userId = CurrentUserContext.getUserId();
-
-        Long userId = 1L;
+        Long userId = CurrentUserContext.getUserId();
 
         DbUsers user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Users not found"));
