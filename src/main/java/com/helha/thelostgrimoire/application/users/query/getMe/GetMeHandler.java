@@ -1,16 +1,16 @@
 package com.helha.thelostgrimoire.application.users.query.getMe;
 
 import com.helha.thelostgrimoire.application.utils.IQueryHandler;
-import com.helha.thelostgrimoire.infrastructure.users.IUserRepository;
+import com.helha.thelostgrimoire.infrastructure.users.IUsersRepository;
 import com.helha.thelostgrimoire.infrastructure.users.DbUsers;
 import org.springframework.stereotype.Service;
 
 @Service
 public class GetMeHandler implements IQueryHandler<GetMeOutput> {
 
-    private final IUserRepository userRepository;
+    private final IUsersRepository userRepository;
 
-    public GetMeHandler(IUserRepository userRepository) {
+    public GetMeHandler(IUsersRepository userRepository) {
         this.userRepository = userRepository;
     }
 
