@@ -1,4 +1,4 @@
-package com.helha.thelostgrimoire.application.notes.query.getallbydirectoriesbyuserid;
+package com.helha.thelostgrimoire.application.notes.query.getAllByDirectoriesByUserid;
 
 public class GetAllByDirectoriesByUserIdOutput {
 }
