@@ -15,6 +15,7 @@ import com.helha.thelostgrimoire.infrastructure.users.IUsersRepository;
 import com.helha.thelostgrimoire.security.JwtService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName; // <-- Import important
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -31,6 +32,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@DisplayName("Notes - Integration Tests (CRUD)")
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -82,29 +84,25 @@ public class NotesIntegrationTest {
         jwtCookie = new Cookie("jwt", token);
     }
 
-    // --- NOUVEAU TEST 1 : Récupérer toutes les notes ---
     @Test
+    @DisplayName("GET /api/notes - 200 - Récupère toutes les notes")
     void shouldGetAllNotes() throws Exception {
-        // Given : 2 notes en base
         createNoteInDb("Note 1");
         createNoteInDb("Note 2");
 
-        // When/Then
         mockMvc.perform(get("/api/notes")
                         .cookie(jwtCookie))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.notes", hasSize(2))) // Vérifie qu'on a bien 2 notes
+                .andExpect(jsonPath("$.notes", hasSize(2)))
                 .andExpect(jsonPath("$.notes[0].name", is("Note 1")));
     }
 
-    // --- NOUVEAU TEST 2 : Récupérer les notes par dossier ---
     @Test
+    @DisplayName("GET /api/notes/directory/{id} - 200 - Récupère les notes d'un dossier spécifique")
     void shouldGetNotesByDirectory() throws Exception {
-        // Given : 2 notes dans le "savedDirectory"
         createNoteInDb("DirNote A");
         createNoteInDb("DirNote B");
 
-        // When/Then
         mockMvc.perform(get("/api/notes/directory/{directoryId}", savedDirectory.id)
                         .cookie(jwtCookie))
                 .andExpect(status().isOk())
@@ -113,6 +111,7 @@ public class NotesIntegrationTest {
     }
 
     @Test
+    @DisplayName("POST /api/notes - 201 - Crée une nouvelle note avec succès")
     void shouldCreateNote() throws Exception {
         CreateNotesInput input = new CreateNotesInput();
         input.name = "My New Note";
@@ -127,6 +126,7 @@ public class NotesIntegrationTest {
     }
 
     @Test
+    @DisplayName("GET /api/notes/{id} - 200 - Récupère une note par son ID")
     void shouldGetNoteById() throws Exception {
         DbNotes savedNote = createNoteInDb("Existing Note");
 
@@ -137,6 +137,7 @@ public class NotesIntegrationTest {
     }
 
     @Test
+    @DisplayName("PUT /api/notes/{id} - 204 - Met à jour une note existante")
     void shouldUpdateNote() throws Exception {
         DbNotes savedNote = createNoteInDb("Old Name");
 
@@ -155,6 +156,7 @@ public class NotesIntegrationTest {
     }
 
     @Test
+    @DisplayName("DELETE /api/notes/{id} - 204 - Supprime une note")
     void shouldDeleteNote() throws Exception {
         DbNotes savedNote = createNoteInDb("To Delete");
 
@@ -165,7 +167,7 @@ public class NotesIntegrationTest {
         assert notesRepository.findById(savedNote.id).isEmpty();
     }
 
-    // Helper pour éviter de dupliquer le code de création de note
+    // Helper
     private DbNotes createNoteInDb(String name) {
         DbNotes note = new DbNotes();
         note.name = name;
