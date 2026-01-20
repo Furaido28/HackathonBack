@@ -76,4 +76,16 @@ public class NotesCommandController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden (Not your note)", content = @Content),
+            @ApiResponse(responseCode = "404", content = @Content)
+    })
+    @DeleteMapping("{noteId}")
+    public ResponseEntity<Void> delete(@PathVariable Long noteId) {
+        Long authUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        processor.deleteNotesHandler.handle(noteId, authUserId);
+        return ResponseEntity.noContent().build();
+    }
 }
