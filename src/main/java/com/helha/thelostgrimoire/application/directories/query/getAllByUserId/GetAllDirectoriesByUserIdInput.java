@@ -1,5 +1,5 @@
 package com.helha.thelostgrimoire.application.directories.query.getAllByUserId;
 
-public class GetAllByUserIdInput {
+public class GetAllDirectoriesByUserIdInput {
     public Long userId;
 }

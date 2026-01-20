@@ -9,25 +9,25 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class GetAllByUserIdHandler implements IQueryHandlerIO<GetAllByUserIdInput, GetAllByUserIdOutput> {
+public class GetAllDirectoriesByUserIdHandler implements IQueryHandlerIO<GetAllDirectoriesByUserIdInput, GetAllDirectoriesByUserIdOutput> {
     private final IDirectoriesRepository directoriesRepository;
     private final ModelMapper modelMapper;
 
-    public GetAllByUserIdHandler(IDirectoriesRepository directoriesRepository, ModelMapper modelMapper) {
+    public GetAllDirectoriesByUserIdHandler(IDirectoriesRepository directoriesRepository, ModelMapper modelMapper) {
         this.directoriesRepository = directoriesRepository;
         this.modelMapper = modelMapper;
     }
 
     @Override
-    public GetAllByUserIdOutput handle(GetAllByUserIdInput request) {
+    public GetAllDirectoriesByUserIdOutput handle(GetAllDirectoriesByUserIdInput request) {
         List<DbDirectories> entities = directoriesRepository
                 .findAllByUserId(request.userId);
 
-        GetAllByUserIdOutput output = new GetAllByUserIdOutput();
+        GetAllDirectoriesByUserIdOutput output = new GetAllDirectoriesByUserIdOutput();
 
         for (DbDirectories entity : entities) {
             output.directories.add(
-                    modelMapper.map(entity, GetAllByUserIdOutput.Directory.class)
+                    modelMapper.map(entity, GetAllDirectoriesByUserIdOutput.Directory.class)
             );
         }
 
