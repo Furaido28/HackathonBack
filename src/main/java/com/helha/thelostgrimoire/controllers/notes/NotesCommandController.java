@@ -1,8 +1,10 @@
 package com.helha.thelostgrimoire.controllers.notes;
 
+import com.helha.thelostgrimoire.application.directories.command.update.UpdateDirectoriesInput;
 import com.helha.thelostgrimoire.application.notes.command.NotesCommandProcessor;
 import com.helha.thelostgrimoire.application.notes.command.create.CreateNotesInput;
 import com.helha.thelostgrimoire.application.notes.command.create.CreateNotesOutput;
+import com.helha.thelostgrimoire.application.notes.command.update.UpdateNotesInput;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,10 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -35,9 +34,7 @@ public class NotesCommandController {
             @ApiResponse(responseCode = "201",
                     headers = @Header(
                             name = "Directories Created",
-                            description = "Directory created successfully"
-                    )
-            ),
+                            description = "Directory created successfully")),
             @ApiResponse(responseCode = "400",
                     content = @Content(schema = @Schema(
                             implementation = org.springframework.http.ProblemDetail.class)))
@@ -60,5 +57,23 @@ public class NotesCommandController {
         return ResponseEntity
                 .created(location)
                 .body(output);
+    }
+
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Update successful"),
+            @ApiResponse(responseCode = "400", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden (Not your note)"),
+            @ApiResponse(responseCode = "404", description = "Note not found")
+    })
+    @PutMapping("/{noteId}")
+    public ResponseEntity<Void> update(@PathVariable Long noteId, @Valid @RequestBody UpdateNotesInput input) {
+        Long authenticatedUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        input.userId = authenticatedUserId;
+        input.id = noteId;
+
+        processor.updateNotesHandler.handle(input);
+
+        return ResponseEntity.noContent().build();
     }
 }
