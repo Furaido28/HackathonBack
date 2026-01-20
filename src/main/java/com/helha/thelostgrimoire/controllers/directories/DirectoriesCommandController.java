@@ -3,6 +3,8 @@ package com.helha.thelostgrimoire.controllers.directories;
 import com.helha.thelostgrimoire.application.directories.command.DirectoriesCommandProcessor;
 import com.helha.thelostgrimoire.application.directories.command.create.CreateDirectoriesInput;
 import com.helha.thelostgrimoire.application.directories.command.create.CreateDirectoriesOutput;
+import com.helha.thelostgrimoire.application.directories.command.update.UpdateDirectoriesInput;
+import com.helha.thelostgrimoire.controllers.directories.exceptions.DirectoriesNotFound;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -75,6 +77,24 @@ public class DirectoriesCommandController {
 
         // 2. Passer l'ID du dossier ET l'ID de l'user au Handler
         directoriesCommandProcessor.deleteDirectoriesHandler.handle(directoryId, authUserId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Update successful"),
+            @ApiResponse(responseCode = "400", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden (Not your directory)"),
+            @ApiResponse(responseCode = "404", description = "Directory not found")
+    })
+    @PutMapping
+    public ResponseEntity<Void> update(@Valid @RequestBody UpdateDirectoriesInput input) {
+
+        Long authenticatedUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        input.userId = authenticatedUserId;
+
+        directoriesCommandProcessor.updateDirectoriesHandler.handle(input);
 
         return ResponseEntity.noContent().build();
     }
