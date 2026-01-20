@@ -1,9 +1,9 @@
 package com.helha.thelostgrimoire.controllers.directories;
 
 import com.helha.thelostgrimoire.application.directories.query.DirectoriesQueryProcessor;
-import com.helha.thelostgrimoire.application.directories.query.getAll.GetAllOutput;
-import com.helha.thelostgrimoire.application.directories.query.getAllByUserId.GetAllByUserIdInput;
-import com.helha.thelostgrimoire.application.directories.query.getAllByUserId.GetAllByUserIdOutput;
+import com.helha.thelostgrimoire.application.directories.query.getAll.GetAllDirectorieOutput;
+import com.helha.thelostgrimoire.application.directories.query.getAllByUserId.GetAllDirectoriesByUserIdInput;
+import com.helha.thelostgrimoire.application.directories.query.getAllByUserId.GetAllDirectoriesByUserIdOutput;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -37,8 +37,8 @@ public class DirectoriesQueryController {
                     content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     })
     @GetMapping()
-    public ResponseEntity<GetAllOutput> getAll() {
-        GetAllOutput output = processor.getAllHandler.handle();
+    public ResponseEntity<GetAllDirectorieOutput> getAll() {
+        GetAllDirectorieOutput output = processor.getAllHandler.handle();
 
         return ResponseEntity.ok(output);
     }
@@ -54,15 +54,15 @@ public class DirectoriesQueryController {
                     content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     })
     @GetMapping("/users/me")
-    public ResponseEntity<GetAllByUserIdOutput> getMyDirectories() {
+    public ResponseEntity<GetAllDirectoriesByUserIdOutput> getMyDirectories() {
 
         Long authenticatedUserId =
                 (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        GetAllByUserIdInput input = new GetAllByUserIdInput();
+        GetAllDirectoriesByUserIdInput input = new GetAllDirectoriesByUserIdInput();
         input.userId = authenticatedUserId;
 
-        GetAllByUserIdOutput output = processor.getAllByUserIdHandler.handle(input);
+        GetAllDirectoriesByUserIdOutput output = processor.getAllDirectoriesByUserIdHandler.handle(input);
         return ResponseEntity.ok(output);
     }
 }

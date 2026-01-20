@@ -9,23 +9,23 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class GetAllHandler implements IQueryHandler<GetAllOutput> {
+public class GetAllDirectoriesHandler implements IQueryHandler<GetAllDirectorieOutput> {
     private final IDirectoriesRepository directoriesRepository;
     private final ModelMapper modelMapper;
 
-    public GetAllHandler(IDirectoriesRepository directoriesRepository, ModelMapper modelMapper) {
+    public GetAllDirectoriesHandler(IDirectoriesRepository directoriesRepository, ModelMapper modelMapper) {
         this.directoriesRepository = directoriesRepository;
         this.modelMapper = modelMapper;
     }
 
     @Override
-    public GetAllOutput handle() {
+    public GetAllDirectorieOutput handle() {
         List<DbDirectories> entities = directoriesRepository.findAll();
 
-        GetAllOutput output = new GetAllOutput();
+        GetAllDirectorieOutput output = new GetAllDirectorieOutput();
 
         for (DbDirectories entity : entities) {
-            output.directories.add(modelMapper.map(entity, GetAllOutput.Directory.class));
+            output.directories.add(modelMapper.map(entity, GetAllDirectorieOutput.Directory.class));
         }
 
         return output;

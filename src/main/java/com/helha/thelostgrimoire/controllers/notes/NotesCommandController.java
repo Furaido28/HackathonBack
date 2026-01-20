@@ -1,7 +1,5 @@
 package com.helha.thelostgrimoire.controllers.notes;
 
-import com.helha.thelostgrimoire.application.directories.command.create.CreateDirectoriesInput;
-import com.helha.thelostgrimoire.application.directories.command.create.CreateDirectoriesOutput;
 import com.helha.thelostgrimoire.application.notes.command.NotesCommandProcessor;
 import com.helha.thelostgrimoire.application.notes.command.create.CreateNotesInput;
 import com.helha.thelostgrimoire.application.notes.command.create.CreateNotesOutput;
@@ -53,10 +51,9 @@ public class NotesCommandController {
 
         CreateNotesOutput output = processor.createNotesHandler.handle(input);
 
-        // Location: /api/directories/{idCreated}
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
-                .path("/{directoryId}")
+                .path("/{noteId}")
                 .buildAndExpand(output.id)
                 .toUri();
 

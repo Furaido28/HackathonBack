@@ -1,17 +1,17 @@
 package com.helha.thelostgrimoire.application.directories.query;
 
-import com.helha.thelostgrimoire.application.directories.query.getAll.GetAllHandler;
-import com.helha.thelostgrimoire.application.directories.query.getAllByUserId.GetAllByUserIdHandler;
+import com.helha.thelostgrimoire.application.directories.query.getAll.GetAllDirectoriesHandler;
+import com.helha.thelostgrimoire.application.directories.query.getAllByUserId.GetAllDirectoriesByUserIdHandler;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DirectoriesQueryProcessor {
-    public final GetAllHandler getAllHandler;
-    public final GetAllByUserIdHandler getAllByUserIdHandler;
+    public final GetAllDirectoriesHandler getAllHandler;
+    public final GetAllDirectoriesByUserIdHandler getAllDirectoriesByUserIdHandler;
 
-    public DirectoriesQueryProcessor(GetAllHandler getAllHandler,
-                                     GetAllByUserIdHandler getAllByUserIdHandler) {
+    public DirectoriesQueryProcessor(GetAllDirectoriesHandler getAllHandler,
+                                     GetAllDirectoriesByUserIdHandler getAllDirectoriesByUserIdHandler) {
         this.getAllHandler = getAllHandler;
-        this.getAllByUserIdHandler = getAllByUserIdHandler;
+        this.getAllDirectoriesByUserIdHandler = getAllDirectoriesByUserIdHandler;
     }
 }
