@@ -1,17 +1,18 @@
 package com.helha.thelostgrimoire.controllers.advices;
 
-import org.springframework.beans.factory.parsing.Problem;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalErrors {
+
     @ExceptionHandler(IllegalArgumentException.class)
     ProblemDetail badRequest(Exception exception) {
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
@@ -24,19 +25,30 @@ public class GlobalErrors {
     ProblemDetail badRequest(MethodArgumentNotValidException exception) {
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         problemDetail.setTitle("Bad request");
-        Map errors = exception.getBindingResult()
+
+        Map<String, String> errors = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .collect(Collectors.toMap(
                         fe -> fe.getField(),
                         fe -> fe.getDefaultMessage(),
-                        (oldName, newName) -> oldName
+                        (oldMsg, newMsg) -> oldMsg
                 ));
-        problemDetail.setProperty("errors",errors);
+
+        problemDetail.setProperty("errors", errors);
         return problemDetail;
     }
 
-    //permet de gérer tous les cas non traité auparavant
+    // laisse passer les statuts (403/404/409/...)
+    @ExceptionHandler(ResponseStatusException.class)
+    ProblemDetail responseStatus(ResponseStatusException exception) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(exception.getStatusCode());
+        problemDetail.setTitle(exception.getStatusCode().toString());
+        problemDetail.setDetail(exception.getReason() != null ? exception.getReason() : exception.getMessage());
+        return problemDetail;
+    }
+
+    // permet de gérer tous les cas non traité auparavant
     @ExceptionHandler(Exception.class)
     ProblemDetail internalServerError(Exception exception) {
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);

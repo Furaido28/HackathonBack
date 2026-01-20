@@ -1,6 +1,7 @@
 package com.helha.thelostgrimoire.integrations.directories;
 
 import com.helha.thelostgrimoire.infrastructure.directories.DbDirectories;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -134,13 +135,17 @@ public class DirectoriesCommandControllerIT extends AbstractDirectoriesIT {
 
         @Test
         @WithMockUser(username = "42")
-        @DisplayName("409 - tentative de suppression d'un répertoire avec des enfants")
-        void deleteDirectory_withChildren_shouldReturnConflict() throws Exception {
+        @DisplayName("204 - suppression cascade: supprimer parent supprime enfant")
+        void deleteDirectory_withChildren_shouldCascadeDelete_andReturnNoContent() throws Exception {
             DbDirectories parent = persist(42L, "Parent", null);
-            persist(42L, "Enfant", parent.id);
+            DbDirectories child = persist(42L, "Child", parent.id);
 
             mockMvc.perform(delete("/api/directories/{directoryId}", parent.id))
-                    .andExpect(status().isConflict());
+                    .andExpect(status().isNoContent());
+
+            assertFalse(directoriesRepository.existsById(parent.id));
+            assertFalse(directoriesRepository.existsById(child.id));
         }
+
     }
 }
