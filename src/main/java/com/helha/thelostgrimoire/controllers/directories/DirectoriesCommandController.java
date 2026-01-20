@@ -43,16 +43,15 @@ public class DirectoriesCommandController {
                             implementation = org.springframework.http.ProblemDetail.class)))
     })
     public ResponseEntity<CreateDirectoriesOutput> createDirectory(
-            @Valid @RequestBody CreateDirectoriesInput input
-    ) {
-
-        Long authenticatedUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            @Valid @RequestBody CreateDirectoriesInput input) {
+        // Récupérer l'ID de l'utilisateur depuis l'authentication
+        String principal = SecurityContextHolder.getContext().getAuthentication().getName();
+        Long authenticatedUserId = Long.parseLong(principal); // Convertir String en Long
 
         input.userId = authenticatedUserId;
 
         CreateDirectoriesOutput output = directoriesCommandProcessor.createDirectoriesHandler.handle(input);
 
-        // Location: /api/directories/{idCreated}
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{directoryId}")
