@@ -10,7 +10,6 @@ public class GetAllByDirectoriesByUserIdOutput {
     public static class NoteDto {
         public Long id;
         public String name;
-        public String content;
         public LocalDateTime createdAt;
     }
 }

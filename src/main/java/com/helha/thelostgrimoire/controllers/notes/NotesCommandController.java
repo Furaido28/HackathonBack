@@ -12,10 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -60,5 +57,17 @@ public class NotesCommandController {
         return ResponseEntity
                 .created(location)
                 .body(output);
+    }
+
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden (Not your note)", content = @Content),
+            @ApiResponse(responseCode = "404", content = @Content)
+    })
+    @DeleteMapping("{noteId}")
+    public ResponseEntity<Void> delete(@PathVariable Long noteId) {
+        Long authUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        processor.deleteNotesHandler.handle(noteId, authUserId);
+        return ResponseEntity.noContent().build();
     }
 }
