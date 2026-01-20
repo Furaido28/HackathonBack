@@ -2,6 +2,7 @@ package com.helha.thelostgrimoire.infrastructure.notes;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
@@ -12,11 +13,11 @@ public class DbNotes {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
-    @NotBlank(message = "User id can't be empty")
+    @NotNull(message = "User id can't be null")
     @Column(name = "user_id")
     public Long userId;
 
-    @NotBlank(message = "Directory id can't be empty")
+    @NotNull(message = "Directory id can't be null")
     @Column(name = "directory_id")
     public Long directoryId;
 

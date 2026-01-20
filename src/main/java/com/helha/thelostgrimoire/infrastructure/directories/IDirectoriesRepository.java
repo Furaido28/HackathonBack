@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface IDirectoriesRepository extends JpaRepository<DbDirectories, Long> {
     List<DbDirectories> findAllByUserId(Long userId);
+    boolean existsByIdAndUserId(Long id, Long userId);
 }
