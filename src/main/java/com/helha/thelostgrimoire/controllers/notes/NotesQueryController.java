@@ -4,7 +4,12 @@ import com.helha.thelostgrimoire.application.notes.query.GetAllByDirectoriesByUs
 import com.helha.thelostgrimoire.application.notes.query.GetAllByDirectoriesByUserId.GetAllByDirectoriesByUserIdOutput;
 import com.helha.thelostgrimoire.application.notes.query.NotesQueryProcessor;
 import com.helha.thelostgrimoire.application.notes.query.getAll.GetAllNotesOutput;
+
 import io.swagger.v3.oas.annotations.Operation;
+
+import com.helha.thelostgrimoire.application.notes.query.getById.GetNoteByIdInput;
+import com.helha.thelostgrimoire.application.notes.query.getById.GetNoteByIdOutput;
+
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -56,6 +61,26 @@ public class NotesQueryController {
         input.userId = authUserId;
 
         GetAllByDirectoriesByUserIdOutput output = processor.getAllByDirectoriesByUserIdHandler.handle(input);
+
+        return ResponseEntity.ok(output);
+    }
+
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    headers = @Header(
+                            name = "Note informations",
+                            description = "Get note informations"
+                    )
+            ),
+            @ApiResponse(responseCode = "404",
+                    content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
+    @GetMapping("/{noteId}")
+    public ResponseEntity<GetNoteByIdOutput> getById(@PathVariable Long noteId) {
+        GetNoteByIdInput input = new GetNoteByIdInput();
+        input.id = noteId;
+
+        GetNoteByIdOutput output = processor.getNoteByIdHandler.handle(input);
 
         return ResponseEntity.ok(output);
     }
