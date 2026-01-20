@@ -53,7 +53,7 @@ public class DirectoriesQueryController {
             @ApiResponse(responseCode = "404",
                     content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     })
-    @GetMapping("/users/me")
+    @GetMapping("/me")
     public ResponseEntity<GetAllDirectoriesByUserIdOutput> getMyDirectories() {
 
         Long authenticatedUserId =
