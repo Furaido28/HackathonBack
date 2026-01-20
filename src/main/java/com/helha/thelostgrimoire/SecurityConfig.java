@@ -42,7 +42,7 @@ public class SecurityConfig {
                                 "/webjars/**"
                         ).permitAll()
 
-                        // Auth publique (✅ bon chemin)
+                        // Auth publique
                         .requestMatchers("/api/auth/**").permitAll()
 
                         // (optionnel mais pratique pour CORS/preflight)
