@@ -12,7 +12,7 @@ public class NotesCommandProcessor {
     public final DeleteNotesHandler deleteNotesHandler;
     public final UpdateNotesHandler updateNotesHandler;
 
-    public NotesCommandProcessor(CreateNotesHandler createNotesHandler, GetAllByDirectoriesByUserIdHandler getAllByDirectoriesByUserIdHandler) {
+    public NotesCommandProcessor(CreateNotesHandler createNotesHandler, DeleteNotesHandler deleteNotesHandler, UpdateNotesHandler updateNotesHandler) {
         this.createNotesHandler = createNotesHandler;
         this.deleteNotesHandler = deleteNotesHandler;
         this.updateNotesHandler = updateNotesHandler;
