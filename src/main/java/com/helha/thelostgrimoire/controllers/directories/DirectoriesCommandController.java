@@ -43,16 +43,15 @@ public class DirectoriesCommandController {
                             implementation = org.springframework.http.ProblemDetail.class)))
     })
     public ResponseEntity<CreateDirectoriesOutput> createDirectory(
-            @Valid @RequestBody CreateDirectoriesInput input
-    ) {
-
-        Long authenticatedUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            @Valid @RequestBody CreateDirectoriesInput input) {
+        // Récupérer l'ID de l'utilisateur depuis l'authentication
+        String principal = SecurityContextHolder.getContext().getAuthentication().getName();
+        Long authenticatedUserId = Long.parseLong(principal);
 
         input.userId = authenticatedUserId;
 
         CreateDirectoriesOutput output = directoriesCommandProcessor.createDirectoriesHandler.handle(input);
 
-        // Location: /api/directories/{idCreated}
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{directoryId}")
@@ -73,7 +72,9 @@ public class DirectoriesCommandController {
     public ResponseEntity<Void> delete(@PathVariable Long directoryId) {
 
         // 1. Récupérer l'ID de l'utilisateur connecté (Sécurité)
-        Long authUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long authUserId = Long.parseLong(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+        );
 
         // 2. Passer l'ID du dossier ET l'ID de l'user au Handler
         directoriesCommandProcessor.deleteDirectoriesHandler.handle(directoryId, authUserId);
@@ -90,7 +91,9 @@ public class DirectoriesCommandController {
     @PutMapping
     public ResponseEntity<Void> update(@Valid @RequestBody UpdateDirectoriesInput input) {
 
-        Long authenticatedUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long authenticatedUserId = Long.parseLong(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+        );
 
         input.userId = authenticatedUserId;
 

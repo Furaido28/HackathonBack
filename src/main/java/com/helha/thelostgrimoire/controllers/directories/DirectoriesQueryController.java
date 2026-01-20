@@ -56,8 +56,9 @@ public class DirectoriesQueryController {
     @GetMapping("/me")
     public ResponseEntity<GetAllDirectoriesByUserIdOutput> getMyDirectories() {
 
-        Long authenticatedUserId =
-                (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        long authenticatedUserId = Long.parseLong(
+                SecurityContextHolder.getContext().getAuthentication().getName()
+        );
 
         GetAllDirectoriesByUserIdInput input = new GetAllDirectoriesByUserIdInput();
         input.userId = authenticatedUserId;
