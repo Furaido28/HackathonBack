@@ -28,7 +28,6 @@ public class DirectoriesCommandController {
         this.directoriesCommandProcessor = directoriesCommandProcessor;
     }
 
-    // 1. On retire "/{userId}". La route est désormais juste POST sur /api/directories
     @PostMapping
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201",
@@ -44,15 +43,11 @@ public class DirectoriesCommandController {
     public ResponseEntity<CreateDirectoriesOutput> createDirectory(
             @Valid @RequestBody CreateDirectoriesInput input
     ) {
-        // 2. SÉCURITÉ : Récupération de l'ID depuis le Token (via le Context)
-        // Ton filtre a mis un "Long" dans le principal, donc on cast en Long.
+
         Long authenticatedUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // 3. FORCE L'ID : On écrase ce que l'utilisateur a pu envoyer dans le JSON
-        // Comme tes champs sont publics dans CreateDirectoriesInput, on assigne directement.
         input.userId = authenticatedUserId;
 
-        // Appel du handler avec l'input sécurisé
         CreateDirectoriesOutput output = directoriesCommandProcessor.createDirectoriesHandler.handle(input);
 
         // Location: /api/directories/{idCreated}
@@ -65,5 +60,22 @@ public class DirectoriesCommandController {
         return ResponseEntity
                 .created(location)
                 .body(output);
+    }
+
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden (Not your directory)", content = @Content),
+            @ApiResponse(responseCode = "404", content = @Content)
+    })
+    @DeleteMapping("{directoryId}")
+    public ResponseEntity<Void> delete(@PathVariable Long directoryId) {
+
+        // 1. Récupérer l'ID de l'utilisateur connecté (Sécurité)
+        Long authUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        // 2. Passer l'ID du dossier ET l'ID de l'user au Handler
+        directoriesCommandProcessor.deleteDirectoriesHandler.handle(directoryId, authUserId);
+
+        return ResponseEntity.noContent().build();
     }
 }
