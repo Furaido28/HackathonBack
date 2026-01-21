@@ -1,6 +1,6 @@
 package com.helha.thelostgrimoire.application.users;
 
-import com.helha.thelostgrimoire.domain.Users;
+import com.helha.thelostgrimoire.domain.models.Users;
 import com.helha.thelostgrimoire.infrastructure.users.DbUsers;
 
 public class UserMapper {

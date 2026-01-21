@@ -1,4 +1,4 @@
-package com.helha.thelostgrimoire.domain;
+package com.helha.thelostgrimoire.domain.models;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

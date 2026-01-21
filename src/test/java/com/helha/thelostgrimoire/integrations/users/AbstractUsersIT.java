@@ -3,7 +3,7 @@ package com.helha.thelostgrimoire.integrations.users;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.helha.thelostgrimoire.TestcontainersConfiguration;
 import com.helha.thelostgrimoire.application.users.UserMapper;
-import com.helha.thelostgrimoire.domain.Users;
+import com.helha.thelostgrimoire.domain.models.Users;
 import com.helha.thelostgrimoire.infrastructure.users.DbUsers;
 import com.helha.thelostgrimoire.infrastructure.users.IUsersRepository;
 import com.helha.thelostgrimoire.security.JwtService;

@@ -2,14 +2,12 @@ package com.helha.thelostgrimoire.application.users.command.login;
 
 import com.helha.thelostgrimoire.application.users.UserMapper;
 import com.helha.thelostgrimoire.application.utils.ICommandHandler;
-import com.helha.thelostgrimoire.domain.Users;
+import com.helha.thelostgrimoire.domain.models.Users;
 import com.helha.thelostgrimoire.infrastructure.users.DbUsers;
 import com.helha.thelostgrimoire.infrastructure.users.IUsersRepository;
 import com.helha.thelostgrimoire.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 public class LoginHandler implements ICommandHandler<LoginInput, String> {

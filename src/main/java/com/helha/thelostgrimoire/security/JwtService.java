@@ -1,6 +1,6 @@
 package com.helha.thelostgrimoire.security;
 
-import com.helha.thelostgrimoire.domain.Users;
+import com.helha.thelostgrimoire.domain.models.Users;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
