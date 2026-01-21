@@ -24,6 +24,9 @@ public class DbDirectories {
     @Column(name = "name", nullable = false)
     public String name;
 
+    @Column(name = "is_root", nullable = false)
+    public boolean isRoot = false;
+
     @Column(name = "created_at", nullable = false)
     public LocalDateTime createdAt;
 }
