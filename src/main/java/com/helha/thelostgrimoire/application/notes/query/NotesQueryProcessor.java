@@ -18,6 +18,7 @@ public class NotesQueryProcessor {
         this.getAllNotesHandler = getAllNotesHandler;
         this.getAllByDirectoriesByUserIdHandler = getAllByDirectoriesByUserIdHandler;
         this.getNoteByIdHandler = getNoteByIdHandler;
+        //
 
     }
 }

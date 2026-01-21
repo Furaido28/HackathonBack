@@ -1,4 +1,5 @@
 package com.helha.thelostgrimoire.application.notes.query.getById;
+
 import com.helha.thelostgrimoire.application.utils.CurrentUserContext;
 import com.helha.thelostgrimoire.application.utils.IQueryHandlerIO;
 import com.helha.thelostgrimoire.infrastructure.notes.DbNotes;
@@ -34,11 +35,11 @@ public class GetNoteByIdHandler
 
         if (!entity.userId.equals(currentUserId)) {
             throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED
+                    HttpStatus.FORBIDDEN,
+                    "You are not allowed to access this note"
             );
         }
 
         return modelMapper.map(entity, GetNoteByIdOutput.class);
     }
 }
-

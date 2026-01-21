@@ -18,6 +18,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -26,15 +27,15 @@ import java.time.LocalDateTime;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
                 "spring.jpa.hibernate.ddl-auto=create-drop",
-                "spring.jpa.show-sql=true"
+                "spring.jpa.show-sql=false"
         }
 )
 @AutoConfigureMockMvc
+@Transactional
 public abstract class AbstractNotesIT {
 
     @Autowired protected MockMvc mockMvc;
     @Autowired protected ObjectMapper objectMapper;
-
     @Autowired protected IUsersRepository usersRepository;
     @Autowired protected IDirectoriesRepository directoriesRepository;
     @Autowired protected INotesRepository notesRepository;
@@ -50,7 +51,7 @@ public abstract class AbstractNotesIT {
         directoriesRepository.deleteAll();
         usersRepository.deleteAll();
 
-        // 1) User
+        // 1. Création User (John)
         DbUsers user = new DbUsers();
         user.name = "Doe";
         user.firstname = "John";
@@ -59,27 +60,54 @@ public abstract class AbstractNotesIT {
         user.createdAt = LocalDateTime.now();
         savedUser = usersRepository.save(user);
 
-        // 2) Directory
+        // 2. Création Directory
         DbDirectories dir = new DbDirectories();
         dir.name = "My Directory";
         dir.userId = savedUser.id;
         dir.createdAt = LocalDateTime.now();
         savedDirectory = directoriesRepository.save(dir);
 
-        // 3) JWT cookie
+        // 3. Token JWT
         Users domainUser = UserMapper.toDomain(savedUser);
         String token = jwtService.generateToken(domainUser);
         jwtCookie = new Cookie("jwt", token);
     }
 
-    protected DbNotes createNoteInDb(String name) {
+    // ==========================================
+    // 🛠️ HELPERS (Protected pour l'héritage)
+    // ==========================================
+    protected DbNotes createNoteInDb(String name, String content) {
         DbNotes note = new DbNotes();
         note.name = name;
-        note.content = "Content";
+        note.content = content;
         note.directoryId = savedDirectory.id;
         note.userId = savedUser.id;
         note.createdAt = LocalDateTime.now();
         note.updatedAt = LocalDateTime.now();
         return notesRepository.save(note);
+    }
+
+    protected DbNotes createHackerNote() {
+        DbUsers hacker = new DbUsers();
+        hacker.name = "Hacker";
+        hacker.firstname = "Bob";
+        hacker.emailAddress = "hacker@test.com";
+        hacker.hashPassword = "hash";
+        hacker.createdAt = LocalDateTime.now();
+        hacker = usersRepository.save(hacker);
+
+        DbDirectories hackerDir = new DbDirectories();
+        hackerDir.name = "Hacker Dir";
+        hackerDir.userId = hacker.id;
+        hackerDir.createdAt = LocalDateTime.now();
+        hackerDir = directoriesRepository.save(hackerDir);
+
+        DbNotes hackerNote = new DbNotes();
+        hackerNote.name = "Secret Hacker Note";
+        hackerNote.content = "Secret";
+        hackerNote.userId = hacker.id;
+        hackerNote.directoryId = hackerDir.id;
+        hackerNote.createdAt = LocalDateTime.now();
+        return notesRepository.save(hackerNote);
     }
 }

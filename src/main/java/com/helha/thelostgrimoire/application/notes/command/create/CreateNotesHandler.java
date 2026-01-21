@@ -2,12 +2,13 @@ package com.helha.thelostgrimoire.application.notes.command.create;
 
 import com.helha.thelostgrimoire.application.utils.CurrentUserContext;
 import com.helha.thelostgrimoire.application.utils.ICommandHandler;
-import com.helha.thelostgrimoire.infrastructure.directories.DbDirectories;
 import com.helha.thelostgrimoire.infrastructure.directories.IDirectoriesRepository;
 import com.helha.thelostgrimoire.infrastructure.notes.DbNotes;
 import com.helha.thelostgrimoire.infrastructure.notes.INotesRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus; // <--- N'oublie pas cet import
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException; // <--- Et celui-ci
 
 import java.time.LocalDateTime;
 
@@ -33,14 +34,15 @@ public class CreateNotesHandler implements ICommandHandler<CreateNotesInput, Cre
                 .existsByIdAndUserId(request.directoryId, userId);
 
         if (!ownsDirectory) {
-            throw new RuntimeException("You cannot create a note in this directory");
+            // CORRECTION ICI : On lance une exception HTTP spécifique (403)
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot create a note in this directory");
         }
 
         DbNotes entity = new DbNotes();
         entity.userId = userId;
         entity.directoryId = request.directoryId;
         entity.name = request.name;
-        entity.content = "";
+        entity.content = ""; // Contenu vide à la création, comme prévu
         entity.createdAt = now;
         entity.updatedAt = now;
 
