@@ -17,6 +17,7 @@ public class DeleteDirectoriesHandler {
 
     @Transactional
     public void handle(Long directoryId, Long authenticatedUserId) {
+
         DbDirectories directory = directoriesRepository.findById(directoryId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Directory not found"));
 
@@ -24,7 +25,10 @@ public class DeleteDirectoriesHandler {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to delete this directory");
         }
 
-        directoriesRepository.deleteByParentDirectoryId(directoryId);
+        if (directory.isRoot) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot delete the root directory");
+        }
+
         directoriesRepository.delete(directory);
     }
 }
