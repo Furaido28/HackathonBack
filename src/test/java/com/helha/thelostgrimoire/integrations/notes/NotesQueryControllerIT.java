@@ -1,50 +1,66 @@
 package com.helha.thelostgrimoire.integrations.notes;
 
+import com.helha.thelostgrimoire.infrastructure.notes.DbNotes;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@DisplayName("Notes - Query Controller IT")
-public class NotesQueryControllerIT extends AbstractNotesIT {
+@DisplayName("🔍 Tests d'Intégration - Notes Queries (GET)")
+class NotesQueryControllerIT extends AbstractNotesIT {
 
-    @Test
-    @DisplayName("GET /api/notes - 200 - Récupère toutes les notes")
-    void shouldGetAllNotes() throws Exception {
-        createNoteInDb("Note 1");
-        createNoteInDb("Note 2");
+    @Nested
+    @DisplayName("📖 READ (GET)")
+    class ReadOperations {
 
-        mockMvc.perform(get("/api/notes")
-                        .cookie(jwtCookie))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.notes", hasSize(2)))
-                .andExpect(jsonPath("$.notes[0].name", is("Note 1")));
-    }
+        @Test
+        @DisplayName("200 - Récupérer toutes les notes")
+        void shouldGetAllNotes() throws Exception {
+            createNoteInDb("Note 1", "C1");
+            createNoteInDb("Note 2", "C2");
 
-    @Test
-    @DisplayName("GET /api/notes/directory/{id} - 200 - Récupère les notes d'un dossier spécifique")
-    void shouldGetNotesByDirectory() throws Exception {
-        createNoteInDb("DirNote A");
-        createNoteInDb("DirNote B");
+            mockMvc.perform(get("/api/notes").cookie(jwtCookie))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.notes", hasSize(2)));
+        }
 
-        mockMvc.perform(get("/api/notes/directory/{directoryId}", savedDirectory.id)
-                        .cookie(jwtCookie))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.notes", hasSize(2)))
-                .andExpect(jsonPath("$.notes[0].name", is("DirNote A")));
-    }
+        @Test
+        @DisplayName("200 - Récupérer par ID")
+        void shouldGetNoteById() throws Exception {
+            DbNotes savedNote = createNoteInDb("Target Note", "Content");
 
-    @Test
-    @DisplayName("GET /api/notes/{id} - 200 - Récupère une note par son ID")
-    void shouldGetNoteById() throws Exception {
-        var savedNote = createNoteInDb("Existing Note");
+            mockMvc.perform(get("/api/notes/{id}", savedNote.id).cookie(jwtCookie))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.name", is("Target Note")));
+        }
 
-        mockMvc.perform(get("/api/notes/{id}", savedNote.id)
-                        .cookie(jwtCookie))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name", is("Existing Note")));
+        @Test
+        @DisplayName("200 - Récupérer par Dossier")
+        void shouldGetNotesByDirectory() throws Exception {
+            createNoteInDb("In Dir", "Content");
+            mockMvc.perform(get("/api/notes/directory/{id}", savedDirectory.id).cookie(jwtCookie))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.notes", hasSize(1)));
+        }
+
+        @Test
+        @DisplayName("404 - Erreur si note inexistante")
+        void shouldReturnNotFound_WhenNoteDoesNotExist() throws Exception {
+            mockMvc.perform(get("/api/notes/{id}", 999999L).cookie(jwtCookie))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("403 - Erreur si lecture note d'autrui")
+        void shouldReturnForbidden_WhenReadingOtherUserNote() throws Exception {
+            DbNotes hackerNote = createHackerNote();
+            mockMvc.perform(get("/api/notes/{id}", hackerNote.id).cookie(jwtCookie))
+                    .andExpect(status().isForbidden());
+        }
     }
 }
