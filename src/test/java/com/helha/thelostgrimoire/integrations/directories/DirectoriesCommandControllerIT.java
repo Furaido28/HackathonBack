@@ -1,7 +1,7 @@
 package com.helha.thelostgrimoire.integrations.directories;
 
 import com.helha.thelostgrimoire.application.users.UserMapper;
-import com.helha.thelostgrimoire.domain.Users;
+import com.helha.thelostgrimoire.domain.models.Users;
 import com.helha.thelostgrimoire.infrastructure.directories.DbDirectories;
 import com.helha.thelostgrimoire.infrastructure.users.DbUsers;
 import com.helha.thelostgrimoire.security.JwtService;
