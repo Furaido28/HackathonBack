@@ -8,6 +8,8 @@ import com.helha.thelostgrimoire.application.notes.query.getAll.GetAllNotesOutpu
 import com.helha.thelostgrimoire.application.notes.query.getById.GetNoteByIdInput;
 import com.helha.thelostgrimoire.application.notes.query.getById.GetNoteByIdOutput;
 
+import com.helha.thelostgrimoire.application.notes.query.getMetaData.GetNoteMetadataInput;
+import com.helha.thelostgrimoire.application.notes.query.getMetaData.GetNoteMetadataOutput;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -82,4 +84,24 @@ public class NotesQueryController {
 
         return ResponseEntity.ok(output);
     }
+
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Metadata retrieved"),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
+            @ApiResponse(responseCode = "404", description = "Note not found")
+    })
+    @GetMapping("/{noteId}/metadata")
+    public ResponseEntity<GetNoteMetadataOutput> getMetadata(@PathVariable Long noteId) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        GetNoteMetadataInput input = new GetNoteMetadataInput();
+        input.noteId = noteId;
+        input.userId = userId;
+
+        GetNoteMetadataOutput output = processor.getNoteMetadataHandler.handle(input);
+
+        return ResponseEntity.ok(output);
+    }
+
+
 }
