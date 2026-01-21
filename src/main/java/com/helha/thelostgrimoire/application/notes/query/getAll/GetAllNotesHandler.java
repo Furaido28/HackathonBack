@@ -2,7 +2,6 @@ package com.helha.thelostgrimoire.application.notes.query.getAll;
 
 import com.helha.thelostgrimoire.application.utils.CurrentUserContext;
 import com.helha.thelostgrimoire.application.utils.IQueryHandler;
-import com.helha.thelostgrimoire.application.utils.IQueryHandlerIO;
 import com.helha.thelostgrimoire.infrastructure.notes.DbNotes;
 import com.helha.thelostgrimoire.infrastructure.notes.INotesRepository;
 import org.modelmapper.ModelMapper;
