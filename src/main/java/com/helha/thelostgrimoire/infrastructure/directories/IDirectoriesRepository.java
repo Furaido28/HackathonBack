@@ -10,5 +10,5 @@ import java.util.List;
 public interface IDirectoriesRepository extends JpaRepository<DbDirectories, Long> {
     List<DbDirectories> findAllByUserId(Long userId);
     boolean existsByIdAndUserId(Long id, Long userId);
-
+    void deleteByParentDirectoryId(Long parentDirectoryId);
 }
