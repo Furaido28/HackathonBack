@@ -10,4 +10,11 @@ public class GetNoteByIdOutput {
     public String content;
     public LocalDateTime createdAt;
     public LocalDateTime updatedAt;
+
+    // Nouveaux champs pour les métadonnées
+    // ModelMapper va faire le lien automatiquement avec les getters de DbNotes
+    public Long byteSize;
+    public Integer characterCount;
+    public Integer wordCount;
+    public Integer lineCount;
 }
