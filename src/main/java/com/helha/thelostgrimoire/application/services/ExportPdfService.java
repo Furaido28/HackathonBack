@@ -8,7 +8,7 @@ import com.vladsch.flexmark.parser.Parser;
 import java.io.ByteArrayOutputStream;
 
 @Service
-public class NotesPdfService {
+public class ExportPdfService {
 
     private final Parser parser = Parser.builder().build();
     private final HtmlRenderer renderer = HtmlRenderer.builder().build();
