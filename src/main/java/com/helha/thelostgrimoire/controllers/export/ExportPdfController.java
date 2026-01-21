@@ -1,6 +1,6 @@
-package com.helha.thelostgrimoire.controllers.notes;
+package com.helha.thelostgrimoire.controllers.export;
 
-import com.helha.thelostgrimoire.application.services.NotesPdfService;
+import com.helha.thelostgrimoire.application.services.ExportPdfService;
 import com.helha.thelostgrimoire.controllers.notes.exceptions.NotesNotFound;
 import com.helha.thelostgrimoire.infrastructure.notes.DbNotes;
 import com.helha.thelostgrimoire.infrastructure.notes.INotesRepository;
@@ -12,31 +12,31 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Exporting notes", description = "Notes exporting endpoints")
 @RestController
-@RequestMapping("/api/notes")
-public class NotesPdfController {
+@RequestMapping("/api/export")
+public class ExportPdfController {
 
     private final INotesRepository notesRepository;
-    private final NotesPdfService notesPdfService;
+    private final ExportPdfService exportPdfService;
 
-    public NotesPdfController(
+    public ExportPdfController(
             INotesRepository notesRepository,
-            NotesPdfService notesPdfService
+            ExportPdfService notesPdfService
     ) {
         this.notesRepository = notesRepository;
-        this.notesPdfService = notesPdfService;
+        this.exportPdfService = notesPdfService;
     }
 
     /**
      * Téléchargement PDF d'une note
      * URL : GET /api/notes/{id}/pdf
      */
-    @GetMapping("/{noteId}/pdf")
+    @GetMapping("/pdf/{noteId}")
     public ResponseEntity<byte[]> exportPdf(@PathVariable Long noteId) {
 
         DbNotes note = notesRepository.findById(noteId)
                 .orElseThrow(() -> new NotesNotFound(noteId));
 
-        byte[] pdf = notesPdfService.markdownToPdfBytes(note.content);
+        byte[] pdf = exportPdfService.markdownToPdfBytes(note.content);
 
         String filename = (note.name == null ? "note" : note.name)
                 .replaceAll("[^a-zA-Z0-9._-]", "_") + ".pdf";

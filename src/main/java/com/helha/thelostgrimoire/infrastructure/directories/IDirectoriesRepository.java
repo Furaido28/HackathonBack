@@ -13,4 +13,5 @@ public interface IDirectoriesRepository extends JpaRepository<DbDirectories, Lon
     boolean existsByIdAndUserId(Long id, Long userId);
     void deleteByParentDirectoryId(Long parentDirectoryId);
     Optional<DbDirectories> findByUserIdAndIsRootTrue(Long userId);
+    List<DbDirectories> findByUserIdAndParentDirectoryId(Long userId, Long parentId);
 }
