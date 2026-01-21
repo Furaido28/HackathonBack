@@ -12,7 +12,7 @@ import java.util.Date;
 
 @Service
 public class JwtService {
-
+//    récup branche
     private static final String SECRET = "FGkKY#LAJxg8&8pepaE4aLj4!ndxScXf6FJ@F3ja";
     private static final long EXPIRATION = 1000L * 60 * 60 * 24; // 24h
 
