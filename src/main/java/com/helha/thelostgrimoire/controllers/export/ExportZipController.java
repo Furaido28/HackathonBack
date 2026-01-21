@@ -8,14 +8,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.zip.ZipOutputStream;
 
-@Tag(name = "Exporting notes", description = "Notes exporting endpoints")
+@Tag(name = "Export", description = "Exporting endpoints")
 @RestController
 @RequestMapping("/api/export")
 public class ExportZipController {
@@ -34,7 +33,6 @@ public class ExportZipController {
                 SecurityContextHolder.getContext().getAuthentication().getName()
         );
 
-        // Trouver le dossier racine de l'utilisateur
         DbDirectories rootDir = directoriesRepository.findByUserIdAndIsRootTrue(userId)
                 .orElseThrow(() -> new RuntimeException("Root directory not found"));
 
