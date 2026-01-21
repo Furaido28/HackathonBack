@@ -1,5 +1,6 @@
 package com.helha.thelostgrimoire.application.notes.query.getAll;
 
+import com.helha.thelostgrimoire.application.utils.CurrentUserContext;
 import com.helha.thelostgrimoire.application.utils.IQueryHandler;
 import com.helha.thelostgrimoire.infrastructure.notes.DbNotes;
 import com.helha.thelostgrimoire.infrastructure.notes.INotesRepository;
@@ -20,7 +21,9 @@ public class GetAllNotesHandler implements IQueryHandler<GetAllNotesOutput> {
 
     @Override
     public GetAllNotesOutput handle() {
-        List<DbNotes> entities = notesRepository.findAll();
+        Long userId = CurrentUserContext.getUserId();
+
+        List<DbNotes> entities = notesRepository.findAllByUserId(userId);
 
         GetAllNotesOutput output = new GetAllNotesOutput();
 

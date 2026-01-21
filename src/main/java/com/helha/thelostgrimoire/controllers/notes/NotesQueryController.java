@@ -5,8 +5,6 @@ import com.helha.thelostgrimoire.application.notes.query.GetAllByDirectoriesByUs
 import com.helha.thelostgrimoire.application.notes.query.NotesQueryProcessor;
 import com.helha.thelostgrimoire.application.notes.query.getAll.GetAllNotesOutput;
 
-import io.swagger.v3.oas.annotations.Operation;
-
 import com.helha.thelostgrimoire.application.notes.query.getById.GetNoteByIdInput;
 import com.helha.thelostgrimoire.application.notes.query.getById.GetNoteByIdOutput;
 
@@ -39,8 +37,8 @@ public class NotesQueryController {
             @ApiResponse(responseCode = "404",
                     content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     })
-    @GetMapping()
-    public ResponseEntity<GetAllNotesOutput> getAll() {
+    @GetMapping("/me")
+    public ResponseEntity<GetAllNotesOutput> getAllByUserId() {
         GetAllNotesOutput output = processor.getAllNotesHandler.handle();
         return ResponseEntity.ok(output);
     }
