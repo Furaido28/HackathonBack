@@ -8,7 +8,6 @@ import org.springframework.web.util.UrlPathHelper;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
         UrlPathHelper helper = new UrlPathHelper();
         helper.setRemoveSemicolonContent(true);
