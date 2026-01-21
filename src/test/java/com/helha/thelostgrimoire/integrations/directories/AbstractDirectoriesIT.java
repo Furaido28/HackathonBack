@@ -3,6 +3,7 @@ package com.helha.thelostgrimoire.integrations.directories;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.helha.thelostgrimoire.infrastructure.directories.DbDirectories;
 import com.helha.thelostgrimoire.infrastructure.directories.IDirectoriesRepository;
+import com.helha.thelostgrimoire.infrastructure.users.IUsersRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -33,6 +34,7 @@ public abstract class AbstractDirectoriesIT {
     @Autowired protected MockMvc mockMvc;
     @Autowired protected ObjectMapper objectMapper;
     @Autowired protected IDirectoriesRepository directoriesRepository;
+    @Autowired protected IUsersRepository usersRepository;
 
     @BeforeEach
     void setup() {
