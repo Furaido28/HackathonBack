@@ -37,6 +37,27 @@ class NotesCommandControllerIT extends AbstractNotesIT {
                     .andExpect(jsonPath("$.name", is("My New Note")));
         }
 
+        // --- NOUVEAU TEST AJOUTÉ ICI ---
+        @Test
+        @DisplayName("409 - Erreur si nom déjà pris dans le dossier")
+        void shouldReturnConflict_WhenNameAlreadyExists() throws Exception {
+            // GIVEN : Une note existe déjà avec ce nom
+            createNoteInDb("Duplicate Note", "Original Content");
+
+            // WHEN : On tente de créer une autre note avec le MÊME nom dans le MÊME dossier
+            CreateNotesInput input = new CreateNotesInput();
+            input.name = "Duplicate Note";
+            input.directoryId = savedDirectory.id;
+
+            mockMvc.perform(post("/api/notes")
+                            .cookie(jwtCookie)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(input)))
+                    // THEN : On s'attend à un conflit (409)
+                    .andExpect(status().isConflict());
+        }
+        // -------------------------------
+
         @Test
         @DisplayName("201 - Création à la racine (null parent)")
         void shouldCreateNoteInRoot() throws Exception {
@@ -143,7 +164,6 @@ class NotesCommandControllerIT extends AbstractNotesIT {
                             .cookie(jwtCookie)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(input)))
-                    // CORRECTION ICI : isNoContent (204)
                     .andExpect(status().isNoContent());
 
             DbNotes updated = notesRepository.findById(savedNote.id).get();
@@ -162,7 +182,6 @@ class NotesCommandControllerIT extends AbstractNotesIT {
                             .cookie(jwtCookie)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(input)))
-                    // CORRECTION ICI : isNoContent (204)
                     .andExpect(status().isNoContent());
 
             DbNotes updated = notesRepository.findById(savedNote.id).get();
@@ -182,7 +201,6 @@ class NotesCommandControllerIT extends AbstractNotesIT {
                             .cookie(jwtCookie)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(input)))
-                    // CORRECTION ICI : isNoContent (204)
                     .andExpect(status().isNoContent());
 
             DbNotes updated = notesRepository.findById(savedNote.id).get();
@@ -217,7 +235,6 @@ class NotesCommandControllerIT extends AbstractNotesIT {
                             .cookie(jwtCookie)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(maliciousJson))
-                    // CORRECTION ICI : isNoContent (204)
                     .andExpect(status().isNoContent());
 
             // 5. Vérif
