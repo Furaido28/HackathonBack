@@ -23,7 +23,7 @@ public class GetAllNotesHandler implements IQueryHandler<GetAllNotesOutput> {
     public GetAllNotesOutput handle() {
         Long userId = CurrentUserContext.getUserId();
 
-        List<DbNotes> entities = notesRepository.findAllByUserId(userId);
+        List<DbNotes> entities = notesRepository.findAllByUserIdOrderByNameAsc(userId);
 
         GetAllNotesOutput output = new GetAllNotesOutput();
 

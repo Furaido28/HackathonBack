@@ -32,17 +32,16 @@ public class GetAllByDirectoriesByUserIdHandler implements IQueryHandlerIO<GetAl
                 .orElseThrow(() -> new DirectoriesNotFound(input.directoryId));
 
         if (!directory.userId.equals(input.userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: This directory does not belong to you.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.");
         }
 
-        List<DbNotes> entities = notesRepository.findAllByDirectoryId(input.directoryId);
-
+        // Utilisation de la méthode triée
+        List<DbNotes> entities = notesRepository.findAllByDirectoryIdOrderByNameAsc(input.directoryId);
 
         GetAllByDirectoriesByUserIdOutput output = new GetAllByDirectoriesByUserIdOutput();
         for (DbNotes entity : entities) {
             output.notes.add(modelMapper.map(entity, GetAllByDirectoriesByUserIdOutput.NoteDto.class));
         }
-
         return output;
     }
 }

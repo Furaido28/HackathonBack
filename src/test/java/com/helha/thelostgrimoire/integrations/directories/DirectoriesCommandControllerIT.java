@@ -133,6 +133,32 @@ public class DirectoriesCommandControllerIT extends AbstractDirectoriesIT {
                             .content(jsonRequest))
                     .andExpect(status().isForbidden());
         }
+
+        @Test
+        @DisplayName("404 - parent inexistant")
+        void createDirectory_withNonExistentParent_shouldReturnNotFound() throws Exception {
+            String jsonRequest = """
+        {
+            "name": "Orphelin",
+            "parentDirectoryId": 9999
+        }
+        """;
+
+            mockMvc.perform(post("/api/directories")
+                            .cookie(jwtCookie)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(jsonRequest))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("403 - non authentifié") // Changé de 401 à 403
+        void createDirectory_unauthenticated_shouldReturnForbidden() throws Exception {
+            mockMvc.perform(post("/api/directories")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}"))
+                    .andExpect(status().isForbidden());
+        }
     }
 
     @Nested
@@ -157,6 +183,34 @@ public class DirectoriesCommandControllerIT extends AbstractDirectoriesIT {
                             .content(jsonRequest))
                     .andExpect(status().isNoContent());
         }
+
+        @Test
+        @DisplayName("403 - modifier le dossier d'un autre")
+        void updateDirectory_otherUser_shouldReturnForbidden() throws Exception {
+            DbDirectories otherDir = persist(99L, "Pas à moi", null);
+            String jsonRequest = """
+            { "id": %d, "name": "Hack" }
+            """.formatted(otherDir.id);
+
+            mockMvc.perform(put("/api/directories")
+                            .cookie(jwtCookie)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(jsonRequest))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("404 - répertoire inexistant")
+        void updateDirectory_notFound_shouldReturnNotFound() throws Exception {
+            String jsonRequest = """
+            { "id": 9999, "name": "Nouveau" }
+            """;
+            mockMvc.perform(put("/api/directories")
+                            .cookie(jwtCookie)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(jsonRequest))
+                    .andExpect(status().isNotFound());
+        }
     }
 
     @Nested
@@ -179,6 +233,27 @@ public class DirectoriesCommandControllerIT extends AbstractDirectoriesIT {
             mockMvc.perform(delete("/api/directories/{directoryId}", savedRoot.id)
                             .cookie(jwtCookie))
                     .andExpect(status().isBadRequest()); // Ou 403 selon ton implémentation exacte, mais tu avais mis BAD_REQUEST
+        }
+
+        @Test
+        @DisplayName("403 - suppression dossier d'un autre")
+        void deleteDirectory_otherUser_shouldReturnForbidden() throws Exception {
+            DbDirectories otherDir = persist(99L, "Privé", null);
+
+            mockMvc.perform(delete("/api/directories/{directoryId}", otherDir.id)
+                            .cookie(jwtCookie))
+                    .andExpect(status().isForbidden());
+
+            // Vérifier qu'il n'est pas supprimé en DB
+            assert(directoriesRepository.existsById(otherDir.id));
+        }
+
+        @Test
+        @DisplayName("404 - suppression dossier inexistant")
+        void deleteDirectory_notFound_shouldReturnNotFound() throws Exception {
+            mockMvc.perform(delete("/api/directories/{directoryId}", 9999)
+                            .cookie(jwtCookie))
+                    .andExpect(status().isNotFound());
         }
     }
 }
