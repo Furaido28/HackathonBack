@@ -20,11 +20,15 @@ public class GetAllDirectoriesHandler implements IQueryHandler<GetAllDirectorieO
 
     @Override
     public GetAllDirectorieOutput handle() {
+        // Retrieve all directory entities from the database, sorted alphabetically by name in ascending order.
         List<DbDirectories> entities = directoriesRepository.findAll(
                 org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")
         );
 
+        // Initialize the output container.
         GetAllDirectorieOutput output = new GetAllDirectorieOutput();
+
+        // Map each database entity to the corresponding Directory DTO and add it to the output list.
         for (DbDirectories entity : entities) {
             output.directories.add(modelMapper.map(entity, GetAllDirectorieOutput.Directory.class));
         }

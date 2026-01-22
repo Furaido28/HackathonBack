@@ -18,11 +18,15 @@ public class GetMeHandler implements IQueryHandler<GetMeOutput> {
     @Override
     public GetMeOutput handle() {
 
+        // Retrieve the authenticated user's ID from the security context.
         Long userId = CurrentUserContext.getUserId();
 
+        // Fetch the user's detailed profile from the database using the session ID.
+        // Throw an exception if the user record no longer exists.
         DbUsers user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Users not found"));
 
+        // Map the database entity fields to the GetMeOutput DTO for the frontend.
         GetMeOutput output = new GetMeOutput();
         output.id = user.id;
         output.name = user.name;

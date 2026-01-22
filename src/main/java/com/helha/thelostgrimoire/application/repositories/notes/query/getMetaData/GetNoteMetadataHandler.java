@@ -21,13 +21,17 @@ public class GetNoteMetadataHandler implements IQueryHandlerIO<GetNoteMetadataIn
 
     @Override
     public GetNoteMetadataOutput handle(GetNoteMetadataInput input) {
+        // Fetch the note entity by its ID. Throw 404 Not Found if the note does not exist in the database.
         DbNotes note = notesRepository.findById(input.noteId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Note not found"));
 
+        // Authorization check: Validate that the note belongs to the user requesting the metadata.
+        // This prevents users from accessing timestamps or other metadata of notes they do not own.
         if (!note.userId.equals(input.userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
+        // Map the existing database entity to the metadata output DTO.
         return modelMapper.map(note, GetNoteMetadataOutput.class);
     }
 }

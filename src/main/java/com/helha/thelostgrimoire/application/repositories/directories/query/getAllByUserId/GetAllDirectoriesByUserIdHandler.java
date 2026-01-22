@@ -20,17 +20,21 @@ public class GetAllDirectoriesByUserIdHandler implements IQueryHandlerIO<GetAllD
 
     @Override
     public GetAllDirectoriesByUserIdOutput handle(GetAllDirectoriesByUserIdInput request) {
+        // Query the repository to find all directory records associated with the specific User ID provided in the request.
         List<DbDirectories> entities = directoriesRepository
                 .findAllByUserId(request.userId);
 
+        // Initialize the output DTO which will hold the list of directory results.
         GetAllDirectoriesByUserIdOutput output = new GetAllDirectoriesByUserIdOutput();
 
+        // Iterate through the database entities, mapping each one to the internal Directory DTO class before adding it to the result list.
         for (DbDirectories entity : entities) {
             output.directories.add(
                     modelMapper.map(entity, GetAllDirectoriesByUserIdOutput.Directory.class)
             );
         }
 
+        // Return the populated output object containing the user's directory structure.
         return output;
     }
 }
