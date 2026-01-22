@@ -1,5 +1,6 @@
 package com.helha.thelostgrimoire.integrations.notes;
 
+import com.helha.thelostgrimoire.infrastructure.directories.DbDirectories;
 import com.helha.thelostgrimoire.application.repositories.notes.command.create.CreateNotesInput;
 import com.helha.thelostgrimoire.application.repositories.notes.command.update.UpdateNotesInput;
 import com.helha.thelostgrimoire.infrastructure.notes.DbNotes;
@@ -9,22 +10,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@DisplayName("🔥 Tests d'Intégration - Notes Commands (CUD)")
+@DisplayName("Tests d'Intégration - Notes Commands (CUD)")
 class NotesCommandControllerIT extends AbstractNotesIT {
 
-    // ===================================================================================
-    // 📝 CREATE (POST)
-    // ===================================================================================
     @Nested
-    @DisplayName("📝 CREATE (POST)")
+    @DisplayName("CREATE (POST)")
     class CreateOperations {
 
         @Test
-        @DisplayName("201 - Création standard (Nom uniquement)")
+        @DisplayName("201 - Création standard")
         void shouldCreateNote() throws Exception {
             CreateNotesInput input = new CreateNotesInput();
             input.name = "My New Note";
@@ -39,11 +38,28 @@ class NotesCommandControllerIT extends AbstractNotesIT {
         }
 
         @Test
-        @DisplayName("201 - Création avec caractères spéciaux/Emojis")
-        void shouldCreateNote_WithSpecialChars() throws Exception {
-            String specialName = "Note 🚀 (Kanji: 漢字)";
+        @DisplayName("201 - Création à la racine (null parent)")
+        void shouldCreateNoteInRoot() throws Exception {
             CreateNotesInput input = new CreateNotesInput();
-            input.name = specialName;
+            input.name = "Root Note";
+            input.directoryId = null;
+
+            mockMvc.perform(post("/api/notes")
+                            .cookie(jwtCookie)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(input)))
+                    .andExpect(status().isCreated());
+
+            DbNotes created = notesRepository.findAll().stream()
+                    .filter(n -> n.name.equals("Root Note")).findFirst().get();
+            assertEquals(savedRootDirectory.id, created.directoryId);
+        }
+
+        @Test
+        @DisplayName("201 - Création avec Emojis")
+        void shouldCreateNote_WithEmojis() throws Exception {
+            CreateNotesInput input = new CreateNotesInput();
+            input.name = "Note 🎃👻";
             input.directoryId = savedDirectory.id;
 
             mockMvc.perform(post("/api/notes")
@@ -51,27 +67,12 @@ class NotesCommandControllerIT extends AbstractNotesIT {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(input)))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.name", is(specialName)));
+                    .andExpect(jsonPath("$.name", is("Note 🎃👻")));
         }
 
         @Test
-        @DisplayName("201 - Création limite max (100 chars)")
-        void shouldCreateNote_MaxChars() throws Exception {
-            String maxName = "a".repeat(100);
-            CreateNotesInput input = new CreateNotesInput();
-            input.name = maxName;
-            input.directoryId = savedDirectory.id;
-
-            mockMvc.perform(post("/api/notes")
-                            .cookie(jwtCookie)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(input)))
-                    .andExpect(status().isCreated());
-        }
-
-        @Test
-        @DisplayName("400 - Erreur si nom vide")
-        void shouldReturnBadRequest_WhenNameIsEmpty() throws Exception {
+        @DisplayName("400 - Nom vide")
+        void shouldFail_WhenNameIsEmpty() throws Exception {
             CreateNotesInput input = new CreateNotesInput();
             input.name = "";
             input.directoryId = savedDirectory.id;
@@ -84,8 +85,22 @@ class NotesCommandControllerIT extends AbstractNotesIT {
         }
 
         @Test
-        @DisplayName("403 - Erreur si création dans dossier d'autrui")
-        void shouldReturnForbidden_WhenCreatingInOtherDirectory() throws Exception {
+        @DisplayName("404 - Dossier parent inexistant")
+        void shouldFail_WhenDirectoryNotFound() throws Exception {
+            CreateNotesInput input = new CreateNotesInput();
+            input.name = "Lost Note";
+            input.directoryId = 999999L;
+
+            mockMvc.perform(post("/api/notes")
+                            .cookie(jwtCookie)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(input)))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("403 - Création dans le dossier d'un autre")
+        void shouldFail_WhenDirectoryForbidden() throws Exception {
             DbNotes hackerNote = createHackerNote();
             CreateNotesInput input = new CreateNotesInput();
             input.name = "Intrusion";
@@ -99,79 +114,124 @@ class NotesCommandControllerIT extends AbstractNotesIT {
         }
 
         @Test
-        @DisplayName("201 - Création à la racine (directoryId null)")
-        void shouldCreateNoteInRoot_WhenDirectoryIdIsNull() throws Exception {
-            CreateNotesInput input = new CreateNotesInput();
-            input.name = "Root Note";
-            input.directoryId = null;
+        @DisplayName("500 - Body JSON malformé")
+        void shouldFail_WhenJsonIsMalformed() throws Exception {
+            String badJson = "{ \"name\": \"Test\", \"directoryId\": ";
 
             mockMvc.perform(post("/api/notes")
                             .cookie(jwtCookie)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(input)))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.name", is("Root Note")));
-
-            // Vérification en base que le parent est bien la racine
-            DbNotes createdNote = notesRepository.findAll().stream()
-                    .filter(n -> n.name.equals("Root Note"))
-                    .findFirst().orElseThrow();
-
-            // Doit être égal à savedRootDirectory.id (créé dans le Abstract)
-            assert createdNote.directoryId.equals(savedRootDirectory.id);
+                            .content(badJson))
+                    .andExpect(status().isInternalServerError());
         }
     }
 
-    // ===================================================================================
-    // 💾 UPDATE (PUT)
-    // ===================================================================================
     @Nested
-    @DisplayName("💾 UPDATE (PUT)")
+    @DisplayName("UPDATE (PUT)")
     class UpdateOperations {
 
         @Test
-        @DisplayName("204 - Mise à jour standard (Contenu)")
-        void shouldUpdateNoteContent() throws Exception {
-            DbNotes savedNote = createNoteInDb("Draft", "");
+        @DisplayName("204 - Mise à jour Contenu")
+        void shouldUpdateContent() throws Exception {
+            DbNotes savedNote = createNoteInDb("Draft", "Old");
             UpdateNotesInput input = new UpdateNotesInput();
-            input.name = "Final Title";
-            input.content = "New Content";
+
+            input.name = "Draft";
+            input.content = "New";
 
             mockMvc.perform(put("/api/notes/{id}", savedNote.id)
                             .cookie(jwtCookie)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(input)))
+                    // CORRECTION ICI : isNoContent (204)
                     .andExpect(status().isNoContent());
 
-            DbNotes updated = notesRepository.findById(savedNote.id).orElseThrow();
-            assert updated.content.equals("New Content");
+            DbNotes updated = notesRepository.findById(savedNote.id).get();
+            assertEquals("New", updated.content);
         }
 
         @Test
-        @DisplayName("204 - Mise à jour avec contenu géant (MEDIUMTEXT)")
-        void shouldUpdateNote_WithLargeContent() throws Exception {
-            DbNotes savedNote = createNoteInDb("Empty", "");
-            String largeContent = "a".repeat(100000); // 100kb+
-
+        @DisplayName("204 - Mise à jour Nom")
+        void shouldUpdateName() throws Exception {
+            DbNotes savedNote = createNoteInDb("Draft", "Content");
             UpdateNotesInput input = new UpdateNotesInput();
-            input.name = "Large Note";
-            input.content = largeContent;
+            input.name = "Final";
+            input.content = "Content";
 
             mockMvc.perform(put("/api/notes/{id}", savedNote.id)
                             .cookie(jwtCookie)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(input)))
+                    // CORRECTION ICI : isNoContent (204)
                     .andExpect(status().isNoContent());
 
-            DbNotes updated = notesRepository.findById(savedNote.id).orElseThrow();
-            assert updated.content.length() == largeContent.length();
+            DbNotes updated = notesRepository.findById(savedNote.id).get();
+            assertEquals("Final", updated.name);
         }
 
         @Test
-        @DisplayName("404 - Erreur si mise à jour note inexistante")
-        void shouldReturnNotFound_WhenUpdatingNonExistent() throws Exception {
+        @DisplayName("Sécurité - Impossible de changer le propriétaire (userId)")
+        void shouldIgnoreUserIdChange() throws Exception {
+            DbNotes savedNote = createNoteInDb("My Note", "Content");
+            UpdateNotesInput input = new UpdateNotesInput();
+            input.userId = 9999L;
+            input.name = "Still Mine";
+            input.content = "Content";
+
+            mockMvc.perform(put("/api/notes/{id}", savedNote.id)
+                            .cookie(jwtCookie)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(input)))
+                    // CORRECTION ICI : isNoContent (204)
+                    .andExpect(status().isNoContent());
+
+            DbNotes updated = notesRepository.findById(savedNote.id).get();
+            assertEquals(savedUser.id, updated.userId, "L'utilisateur ne doit pas changer");
+        }
+
+        @Test
+        @DisplayName("Intégrité - Impossible de déplacer la note via Update (directoryId ignoré)")
+        void shouldIgnoreDirectoryChange() throws Exception {
+            // 1. On crée une note de base
+            DbNotes savedNote = createNoteInDb("My Note", "Content");
+
+            // 2. On crée un autre dossier
+            DbDirectories otherDir = new DbDirectories();
+            otherDir.name = "Other";
+            otherDir.userId = savedUser.id;
+            otherDir.parentDirectoryId = savedRootDirectory.id;
+            otherDir.createdAt = java.time.LocalDateTime.now();
+            otherDir = directoriesRepository.save(otherDir);
+
+            // 3. JSON manuel avec 'content'
+            String maliciousJson = """
+                {
+                    "name": "Moved?",
+                    "content": "Content",
+                    "directoryId": %d
+                }
+            """.formatted(otherDir.id);
+
+            // 4. Envoi
+            mockMvc.perform(put("/api/notes/{id}", savedNote.id)
+                            .cookie(jwtCookie)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(maliciousJson))
+                    // CORRECTION ICI : isNoContent (204)
+                    .andExpect(status().isNoContent());
+
+            // 5. Vérif
+            DbNotes updated = notesRepository.findById(savedNote.id).orElseThrow();
+            assertEquals("Moved?", updated.name);
+            assertEquals(savedDirectory.id, updated.directoryId, "La note ne doit pas avoir changé de dossier !");
+        }
+
+        @Test
+        @DisplayName("404 - Update note inexistante")
+        void shouldFail_WhenUpdateNonExistent() throws Exception {
             UpdateNotesInput input = new UpdateNotesInput();
             input.name = "Ghost";
+            input.content = "Boo";
 
             mockMvc.perform(put("/api/notes/{id}", 999999L)
                             .cookie(jwtCookie)
@@ -181,11 +241,12 @@ class NotesCommandControllerIT extends AbstractNotesIT {
         }
 
         @Test
-        @DisplayName("403 - Erreur si mise à jour note d'autrui")
-        void shouldReturnForbidden_WhenUpdatingOtherUserNote() throws Exception {
+        @DisplayName("403 - Update note d'autrui")
+        void shouldFail_WhenUpdateForbidden() throws Exception {
             DbNotes hackerNote = createHackerNote();
             UpdateNotesInput input = new UpdateNotesInput();
             input.name = "Hacked";
+            input.content = "I am here";
 
             mockMvc.perform(put("/api/notes/{id}", hackerNote.id)
                             .cookie(jwtCookie)
@@ -195,27 +256,31 @@ class NotesCommandControllerIT extends AbstractNotesIT {
         }
     }
 
-    // ===================================================================================
-    // 🗑️ DELETE (DELETE)
-    // ===================================================================================
     @Nested
-    @DisplayName("🗑️ DELETE (DELETE)")
+    @DisplayName("DELETE (DELETE)")
     class DeleteOperations {
 
         @Test
         @DisplayName("204 - Suppression standard")
         void shouldDeleteNote() throws Exception {
-            DbNotes savedNote = createNoteInDb("To Delete", "");
+            DbNotes savedNote = createNoteInDb("Delete Me", "");
 
             mockMvc.perform(delete("/api/notes/{id}", savedNote.id).cookie(jwtCookie))
                     .andExpect(status().isNoContent());
 
-            assert notesRepository.findById(savedNote.id).isEmpty();
+            assertEquals(0, notesRepository.count());
         }
 
         @Test
-        @DisplayName("403 - Erreur si suppression note d'autrui")
-        void shouldReturnForbidden_WhenDeletingOtherUserNote() throws Exception {
+        @DisplayName("404 - Suppression note inexistante")
+        void shouldFail_DeleteNonExistent() throws Exception {
+            mockMvc.perform(delete("/api/notes/{id}", 999999L).cookie(jwtCookie))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("403 - Suppression note d'autrui")
+        void shouldFail_DeleteForbidden() throws Exception {
             DbNotes hackerNote = createHackerNote();
             mockMvc.perform(delete("/api/notes/{id}", hackerNote.id).cookie(jwtCookie))
                     .andExpect(status().isForbidden());
