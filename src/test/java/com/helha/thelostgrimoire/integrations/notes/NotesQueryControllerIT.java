@@ -34,6 +34,25 @@ class NotesQueryControllerIT extends AbstractNotesIT {
         }
 
         @Test
+        @DisplayName("200 - Get Me (Vérification du tri Alphabétique)")
+        void shouldGetNotesSortedByName() throws Exception {
+            // GIVEN : On insère des notes dans le désordre (Z, A, B)
+            createNoteInDb("Zebra Note", "Content");
+            createNoteInDb("Alpha Note", "Content");
+            createNoteInDb("Beta Note", "Content");
+
+            // WHEN : On récupère la liste
+            mockMvc.perform(get("/api/notes/me").cookie(jwtCookie))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.notes", hasSize(3)))
+
+                    // THEN : On vérifie que c'est bien trié A -> B -> Z
+                    .andExpect(jsonPath("$.notes[0].name", is("Alpha Note")))
+                    .andExpect(jsonPath("$.notes[1].name", is("Beta Note")))
+                    .andExpect(jsonPath("$.notes[2].name", is("Zebra Note")));
+        }
+
+        @Test
         @DisplayName("200 - Get Me (Liste vide)")
         void shouldGetEmptyList_WhenNoNotes() throws Exception {
             // Aucune note créée
