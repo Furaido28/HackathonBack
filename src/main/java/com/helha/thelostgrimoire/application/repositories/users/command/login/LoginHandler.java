@@ -6,14 +6,16 @@ import com.helha.thelostgrimoire.domain.models.Users;
 import com.helha.thelostgrimoire.infrastructure.users.DbUsers;
 import com.helha.thelostgrimoire.infrastructure.users.IUsersRepository;
 import com.helha.thelostgrimoire.security.JwtService;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException; // <--- Import ajouté
 
 @Service
 public class LoginHandler implements ICommandHandler<LoginInput, String> {
     private final IUsersRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService  jwtService;
+    private final JwtService jwtService;
 
     public LoginHandler(IUsersRepository userRepository,
                         PasswordEncoder passwordEncoder,
@@ -25,21 +27,28 @@ public class LoginHandler implements ICommandHandler<LoginInput, String> {
 
     @Override
     public String handle(LoginInput input) {
+        // 1. Chercher l'utilisateur (ou échouer avec 401)
         DbUsers user = userRepository
                 .findByEmailAddress(input.email)
-                .orElseThrow(() -> new RuntimeException("Email ou mot de passe incorrect"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Email ou mot de passe incorrect"
+                ));
 
+        // 2. Vérifier le mot de passe
         boolean passwordOk = passwordEncoder.matches(
                 input.password,
                 user.hashPassword
         );
 
         if (!passwordOk) {
-            throw new RuntimeException("Email ou mot de passe incorrect");
+            // 3. Si échec, lancer une 401 explicite
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "Email ou mot de passe incorrect"
+            );
         }
 
+        // 4. Générer le token
         Users u = UserMapper.toDomain(user);
-
         return jwtService.generateToken(u);
     }
 }
