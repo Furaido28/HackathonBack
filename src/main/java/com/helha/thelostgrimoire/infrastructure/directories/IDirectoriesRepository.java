@@ -13,4 +13,6 @@ public interface IDirectoriesRepository extends JpaRepository<DbDirectories, Lon
     List<DbDirectories> findAllByUserId(Long userId);
     Optional<DbDirectories> findByUserIdAndIsRootTrue(Long userId);
     List<DbDirectories> findByUserIdAndParentDirectoryId(Long userId, Long parentId);
+    boolean existsByNameAndParentDirectoryIdAndUserId(String name , Long userId, Long parentId);
+    boolean existsByNameAndParentDirectoryIdAndUserIdAndIdNot(String name, Long parentId, Long userId, Long id);
 }

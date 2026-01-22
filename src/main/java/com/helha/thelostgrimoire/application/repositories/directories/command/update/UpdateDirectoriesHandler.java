@@ -26,6 +26,23 @@ public class UpdateDirectoriesHandler implements IEffectCommandHandler<UpdateDir
         }
 
         if (input.name != null && !input.name.isBlank()) {
+            // --- NOUVELLE VÉRIFICATION DE DOUBLON ---
+            // On vérifie si un dossier avec ce nom existe déjà au même endroit
+            // MAIS on exclut le dossier actuel (d'où le "id != input.id")
+            boolean duplicateExists = directoriesRepository.existsByNameAndParentDirectoryIdAndUserIdAndIdNot(
+                    input.name,
+                    directory.parentDirectoryId,
+                    input.userId,
+                    input.id
+            );
+
+            if (duplicateExists) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "A directory with name '" + input.name + "' already exists in this folder."
+                );
+            }
+
             directory.name = input.name;
         }
 
