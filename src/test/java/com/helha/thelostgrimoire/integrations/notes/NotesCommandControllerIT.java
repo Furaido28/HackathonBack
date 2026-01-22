@@ -97,6 +97,29 @@ class NotesCommandControllerIT extends AbstractNotesIT {
                             .content(objectMapper.writeValueAsString(input)))
                     .andExpect(status().isForbidden());
         }
+
+        @Test
+        @DisplayName("201 - Création à la racine (directoryId null)")
+        void shouldCreateNoteInRoot_WhenDirectoryIdIsNull() throws Exception {
+            CreateNotesInput input = new CreateNotesInput();
+            input.name = "Root Note";
+            input.directoryId = null;
+
+            mockMvc.perform(post("/api/notes")
+                            .cookie(jwtCookie)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(input)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.name", is("Root Note")));
+
+            // Vérification en base que le parent est bien la racine
+            DbNotes createdNote = notesRepository.findAll().stream()
+                    .filter(n -> n.name.equals("Root Note"))
+                    .findFirst().orElseThrow();
+
+            // Doit être égal à savedRootDirectory.id (créé dans le Abstract)
+            assert createdNote.directoryId.equals(savedRootDirectory.id);
+        }
     }
 
     // ===================================================================================

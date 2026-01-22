@@ -41,11 +41,22 @@ public abstract class AbstractDirectoriesIT {
         directoriesRepository.deleteAll();
     }
 
+    protected DbDirectories persistRoot(Long userId) {
+        DbDirectories root = new DbDirectories();
+        root.userId = userId;
+        root.name = "root";
+        root.parentDirectoryId = null;
+        root.isRoot = true;
+        root.createdAt = LocalDateTime.now();
+        return directoriesRepository.save(root);
+    }
+
     protected DbDirectories persist(Long userId, String name, Long parentDirectoryId) {
         DbDirectories directory = new DbDirectories();
         directory.userId = userId;
         directory.name = name;
         directory.parentDirectoryId = parentDirectoryId;
+        directory.isRoot = false; // Par défaut
         directory.createdAt = LocalDateTime.now();
         return directoriesRepository.save(directory);
     }
