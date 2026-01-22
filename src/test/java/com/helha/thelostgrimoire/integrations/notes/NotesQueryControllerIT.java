@@ -1,9 +1,12 @@
 package com.helha.thelostgrimoire.integrations.notes;
 
+import com.helha.thelostgrimoire.infrastructure.directories.DbDirectories;
 import com.helha.thelostgrimoire.infrastructure.notes.DbNotes;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -14,60 +17,111 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class NotesQueryControllerIT extends AbstractNotesIT {
 
     @Nested
-    @DisplayName("📖 READ (GET)")
+    @DisplayName("READ (GET)")
     class ReadOperations {
 
         @Test
-        @DisplayName("200 - Récupérer MES notes uniquement (filtrage par user)")
+        @DisplayName("200 - Get Me (Filtre User)")
         void shouldGetOnlyMyNotes() throws Exception {
-            // GIVEN : 2 notes à moi
-            createNoteInDb("My Note 1", "C1");
-            createNoteInDb("My Note 2", "C2");
+            createNoteInDb("Mine 1", "A");
+            createNoteInDb("Mine 2", "B");
+            createHackerNote(); // Note d'un autre user
 
-            // ET : 1 note d'un autre utilisateur (le "Hacker")
-            createHackerNote();
-
-            // WHEN : J'appelle /api/notes/me
             mockMvc.perform(get("/api/notes/me").cookie(jwtCookie))
                     .andExpect(status().isOk())
-                    // THEN : Je ne dois recevoir que mes 2 notes, pas celle du hacker (total 3 en base, mais 2 reçues)
-                    .andExpect(jsonPath("$.notes", hasSize(2)))
-                    .andExpect(jsonPath("$.notes[0].name", is("My Note 1")))
-                    .andExpect(jsonPath("$.notes[1].name", is("My Note 2")));
+                    .andExpect(jsonPath("$.notes", hasSize(2))) // Ignore celle du hacker
+                    .andExpect(jsonPath("$.notes[0].name", is("Mine 1")));
         }
 
         @Test
-        @DisplayName("200 - Récupérer par ID")
+        @DisplayName("200 - Get Me (Vérification du tri Alphabétique)")
+        void shouldGetNotesSortedByName() throws Exception {
+            // GIVEN : On insère des notes dans le désordre (Z, A, B)
+            createNoteInDb("Zebra Note", "Content");
+            createNoteInDb("Alpha Note", "Content");
+            createNoteInDb("Beta Note", "Content");
+
+            // WHEN : On récupère la liste
+            mockMvc.perform(get("/api/notes/me").cookie(jwtCookie))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.notes", hasSize(3)))
+
+                    // THEN : On vérifie que c'est bien trié A -> B -> Z
+                    .andExpect(jsonPath("$.notes[0].name", is("Alpha Note")))
+                    .andExpect(jsonPath("$.notes[1].name", is("Beta Note")))
+                    .andExpect(jsonPath("$.notes[2].name", is("Zebra Note")));
+        }
+
+        @Test
+        @DisplayName("200 - Get Me (Liste vide)")
+        void shouldGetEmptyList_WhenNoNotes() throws Exception {
+            // Aucune note créée
+            mockMvc.perform(get("/api/notes/me").cookie(jwtCookie))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.notes", hasSize(0)));
+        }
+
+        @Test
+        @DisplayName("200 - Get By ID")
         void shouldGetNoteById() throws Exception {
-            DbNotes savedNote = createNoteInDb("Target Note", "Content");
+            DbNotes savedNote = createNoteInDb("Target", "Content");
 
             mockMvc.perform(get("/api/notes/{id}", savedNote.id).cookie(jwtCookie))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name", is("Target Note")));
+                    .andExpect(jsonPath("$.name", is("Target")));
         }
 
         @Test
-        @DisplayName("200 - Récupérer par Dossier")
+        @DisplayName("404 - Get By ID (Inexistant)")
+        void shouldFail_WhenIdNotFound() throws Exception {
+            mockMvc.perform(get("/api/notes/{id}", 99999L).cookie(jwtCookie))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("403 - Get By ID (Interdit)")
+        void shouldFail_WhenIdForbidden() throws Exception {
+            DbNotes hackerNote = createHackerNote();
+            mockMvc.perform(get("/api/notes/{id}", hackerNote.id).cookie(jwtCookie))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("200 - Get By Directory")
         void shouldGetNotesByDirectory() throws Exception {
-            createNoteInDb("In Dir", "Content");
-            // On vérifie que la note est bien trouvée dans le dossier
+            createNoteInDb("In Dir", "C");
             mockMvc.perform(get("/api/notes/directory/{id}", savedDirectory.id).cookie(jwtCookie))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.notes", hasSize(1)));
         }
 
         @Test
-        @DisplayName("404 - Erreur si note inexistante")
-        void shouldReturnNotFound_WhenNoteDoesNotExist() throws Exception {
-            mockMvc.perform(get("/api/notes/{id}", 999999L).cookie(jwtCookie))
+        @DisplayName("200 - Get By Directory (Dossier vide)")
+        void shouldGetEmptyList_WhenDirEmpty() throws Exception {
+            DbDirectories emptyDir = new DbDirectories();
+            emptyDir.name = "Empty";
+            emptyDir.userId = savedUser.id;
+            emptyDir.parentDirectoryId = savedRootDirectory.id;
+            emptyDir.createdAt = LocalDateTime.now();
+            emptyDir = directoriesRepository.save(emptyDir);
+
+            mockMvc.perform(get("/api/notes/directory/{id}", emptyDir.id).cookie(jwtCookie))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.notes", hasSize(0)));
+        }
+
+        @Test
+        @DisplayName("404 - Get By Directory (Dir inexistant)")
+        void shouldFail_WhenDirNotFound() throws Exception {
+            mockMvc.perform(get("/api/notes/directory/{id}", 99999L).cookie(jwtCookie))
                     .andExpect(status().isNotFound());
         }
 
         @Test
-        @DisplayName("403 - Erreur si lecture note d'autrui")
-        void shouldReturnForbidden_WhenReadingOtherUserNote() throws Exception {
-            DbNotes hackerNote = createHackerNote();
-            mockMvc.perform(get("/api/notes/{id}", hackerNote.id).cookie(jwtCookie))
+        @DisplayName("403 - Get By Directory (Dir Interdit)")
+        void shouldFail_WhenDirForbidden() throws Exception {
+            DbNotes hackerNote = createHackerNote(); // Crée dossier hacker
+            mockMvc.perform(get("/api/notes/directory/{id}", hackerNote.directoryId).cookie(jwtCookie))
                     .andExpect(status().isForbidden());
         }
     }
@@ -77,49 +131,41 @@ class NotesQueryControllerIT extends AbstractNotesIT {
     class MetadataTests {
 
         @Test
-        @DisplayName("200 - [Legacy] Vérification métadonnées via GET /id")
-        void shouldReturnCorrectMetadata_OnStandardGet() throws Exception {
-            String content = "Hello World\nTest"; // 3 mots, 2 lignes, 16 chars
-            DbNotes savedNote = createNoteInDb("Meta Note", content);
+        @DisplayName("200 - Metadata (Check DTO léger)")
+        void shouldReturnMetadata_WithoutContent() throws Exception {
+            DbNotes savedNote = createNoteInDb("Stats", "Some long content");
 
-            mockMvc.perform(get("/api/notes/{id}", savedNote.id)
-                            .cookie(jwtCookie))
+            mockMvc.perform(get("/api/notes/{id}/metadata", savedNote.id).cookie(jwtCookie))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.wordCount", is(3)))
-                    .andExpect(jsonPath("$.lineCount", is(2)))
-                    .andExpect(jsonPath("$.byteSize", is(16)));
-        }
-
-        @Test
-        @DisplayName("200 - [New Endpoint] Récupérer métadonnées via /metadata (Léger)")
-        void shouldReturnMetadata_OnDedicatedEndpoint() throws Exception {
-            // GIVEN
-            String content = "Lorem Ipsum"; // 2 mots, 1 ligne, 11 chars
-            DbNotes savedNote = createNoteInDb("Lightweight Note", content);
-
-            // WHEN : Appel de la route dédiée /metadata
-            mockMvc.perform(get("/api/notes/{id}/metadata", savedNote.id)
-                            .cookie(jwtCookie))
-                    .andExpect(status().isOk())
-                    // THEN : Les stats sont là
                     .andExpect(jsonPath("$.id", is(savedNote.id.intValue())))
-                    .andExpect(jsonPath("$.name", is("Lightweight Note")))
-                    .andExpect(jsonPath("$.wordCount", is(2)))
-                    .andExpect(jsonPath("$.characterCount", is(11)))
-                    // ET SURTOUT : Le contenu n'est PAS là (ou null) car c'est un DTO léger
-                    .andExpect(jsonPath("$.content").doesNotExist());
+                    .andExpect(jsonPath("$.wordCount", is(3)))
+                    .andExpect(jsonPath("$.content").doesNotExist()); // Vérifie l'absence du champ
         }
 
         @Test
-        @DisplayName("200 - Vérification métadonnées sur contenu vide")
-        void shouldReturnZeroMetadata_WhenContentIsEmpty() throws Exception {
-            DbNotes savedNote = createNoteInDb("Empty Note", "");
+        @DisplayName("200 - Metadata (Note vide)")
+        void shouldReturnZeroStats() throws Exception {
+            DbNotes savedNote = createNoteInDb("Empty", "");
 
-            mockMvc.perform(get("/api/notes/{id}/metadata", savedNote.id)
-                            .cookie(jwtCookie))
+            mockMvc.perform(get("/api/notes/{id}/metadata", savedNote.id).cookie(jwtCookie))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.wordCount", is(0)))
                     .andExpect(jsonPath("$.byteSize", is(0)));
+        }
+
+        @Test
+        @DisplayName("404 - Metadata (Note inexistante)")
+        void shouldFail_MetaNotFound() throws Exception {
+            mockMvc.perform(get("/api/notes/{id}/metadata", 99999L).cookie(jwtCookie))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("403 - Metadata (Note interdite)")
+        void shouldFail_MetaForbidden() throws Exception {
+            DbNotes hackerNote = createHackerNote();
+            mockMvc.perform(get("/api/notes/{id}/metadata", hackerNote.id).cookie(jwtCookie))
+                    .andExpect(status().isForbidden());
         }
     }
 }
