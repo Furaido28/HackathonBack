@@ -1,7 +1,7 @@
 package com.helha.thelostgrimoire.integrations.notes;
 
-import com.helha.thelostgrimoire.application.notes.command.create.CreateNotesInput;
-import com.helha.thelostgrimoire.application.notes.command.update.UpdateNotesInput;
+import com.helha.thelostgrimoire.application.repositories.notes.command.create.CreateNotesInput;
+import com.helha.thelostgrimoire.application.repositories.notes.command.update.UpdateNotesInput;
 import com.helha.thelostgrimoire.infrastructure.notes.DbNotes;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

@@ -1,10 +1,9 @@
 package com.helha.thelostgrimoire.controllers.notes;
 
-import com.helha.thelostgrimoire.application.directories.command.update.UpdateDirectoriesInput;
-import com.helha.thelostgrimoire.application.notes.command.NotesCommandProcessor;
-import com.helha.thelostgrimoire.application.notes.command.create.CreateNotesInput;
-import com.helha.thelostgrimoire.application.notes.command.create.CreateNotesOutput;
-import com.helha.thelostgrimoire.application.notes.command.update.UpdateNotesInput;
+import com.helha.thelostgrimoire.application.repositories.notes.command.NotesCommandProcessor;
+import com.helha.thelostgrimoire.application.repositories.notes.command.create.CreateNotesInput;
+import com.helha.thelostgrimoire.application.repositories.notes.command.create.CreateNotesOutput;
+import com.helha.thelostgrimoire.application.repositories.notes.command.update.UpdateNotesInput;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

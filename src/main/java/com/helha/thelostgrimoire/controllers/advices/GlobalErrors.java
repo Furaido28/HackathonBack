@@ -1,5 +1,7 @@
 package com.helha.thelostgrimoire.controllers.advices;
 
+import com.helha.thelostgrimoire.controllers.directories.exceptions.DirectoriesNotFound;
+import com.helha.thelostgrimoire.controllers.notes.exceptions.NotesNotFound;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -55,5 +57,21 @@ public class GlobalErrors {
         problemDetail.setTitle("Internal Server Error");
         problemDetail.setDetail(exception.getMessage());
         return problemDetail;
+    }
+
+    @ExceptionHandler(NotesNotFound.class)
+    public ProblemDetail handleNotesNotFound(NotesNotFound ex) {
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        pd.setTitle("Not Found");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
+
+    @ExceptionHandler(DirectoriesNotFound.class)
+    public ProblemDetail handleDirNotFound(DirectoriesNotFound ex) {
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        pd.setTitle("Not Found");
+        pd.setDetail(ex.getMessage());
+        return pd;
     }
 }

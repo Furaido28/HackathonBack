@@ -1,6 +1,6 @@
 package com.helha.thelostgrimoire.security;
 
-import com.helha.thelostgrimoire.application.utils.CurrentUserContext;
+import com.helha.thelostgrimoire.application.repositories.utils.CurrentUserContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;

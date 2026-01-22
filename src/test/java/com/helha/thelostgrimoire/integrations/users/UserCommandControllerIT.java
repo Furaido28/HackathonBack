@@ -1,7 +1,7 @@
 package com.helha.thelostgrimoire.integrations.users;
 
-import com.helha.thelostgrimoire.application.users.command.login.LoginInput;
-import com.helha.thelostgrimoire.application.users.command.register.RegisterInput;
+import com.helha.thelostgrimoire.application.repositories.users.command.login.LoginInput;
+import com.helha.thelostgrimoire.application.repositories.users.command.register.RegisterInput;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
