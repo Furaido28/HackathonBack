@@ -23,6 +23,9 @@ import java.net.URI;
 @RequestMapping("/api/directories")
 public class DirectoriesCommandController {
 
+    /**
+     * Dependency injection of the command processor following the CQRS pattern
+     */
     private final DirectoriesCommandProcessor directoriesCommandProcessor;
 
     public DirectoriesCommandController(DirectoriesCommandProcessor directoriesCommandProcessor) {
@@ -44,13 +47,22 @@ public class DirectoriesCommandController {
     public ResponseEntity<CreateDirectoriesOutput> createDirectory(
             @Valid @RequestBody CreateDirectoriesInput input) {
         // Récupérer l'ID de l'utilisateur depuis l'authentication
+        /**
+         * Extract the authenticated user's unique identifier from the SecurityContext
+         */
         String principal = SecurityContextHolder.getContext().getAuthentication().getName();
         Long authenticatedUserId = Long.parseLong(principal);
 
+        /**
+         * Link the new directory to the currently logged-in user
+         */
         input.userId = authenticatedUserId;
 
         CreateDirectoriesOutput output = directoriesCommandProcessor.createDirectoriesHandler.handle(input);
 
+        /**
+         * Generate the URI for the newly created resource to be returned in the Location header
+         */
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{directoryId}")
@@ -70,12 +82,16 @@ public class DirectoriesCommandController {
     @DeleteMapping("{directoryId}")
     public ResponseEntity<Void> delete(@PathVariable Long directoryId) {
 
-        // 1. Récupérer l'ID de l'utilisateur connecté (Sécurité)
+        /**
+         * Retrieve security credentials to ensure the user can only delete their own resources
+         */
         Long authUserId = Long.parseLong(
                 SecurityContextHolder.getContext().getAuthentication().getName()
         );
 
-        // 2. Passer l'ID du dossier ET l'ID de l'user au Handler
+        /**
+         * Delegate the deletion logic to the command handler with ownership verification
+         */
         directoriesCommandProcessor.deleteDirectoriesHandler.handle(directoryId, authUserId);
 
         return ResponseEntity.noContent().build();
@@ -90,12 +106,18 @@ public class DirectoriesCommandController {
     @PutMapping
     public ResponseEntity<Void> update(@Valid @RequestBody UpdateDirectoriesInput input) {
 
+        /**
+         * Ensure data integrity by overriding the input user ID with the authenticated session ID
+         */
         Long authenticatedUserId = Long.parseLong(
                 SecurityContextHolder.getContext().getAuthentication().getName()
         );
 
         input.userId = authenticatedUserId;
 
+        /**
+         * Execute the update business logic
+         */
         directoriesCommandProcessor.updateDirectoriesHandler.handle(input);
 
         return ResponseEntity.noContent().build();

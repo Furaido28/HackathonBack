@@ -26,6 +26,9 @@ import java.time.Duration;
 @RequestMapping("/api/auth")
 public class UserCommandController {
 
+    /**
+     * Dependency for user-related command processing (login, register, etc.)
+     */
     private final UsersCommandProcessor usersCommandProcessor;
 
     public UserCommandController(UsersCommandProcessor usersCommandProcessor) {
@@ -45,11 +48,17 @@ public class UserCommandController {
     })
     public ResponseEntity<Void> login(@Valid @RequestBody LoginInput input,
                                       HttpServletResponse response) {
-       String token = usersCommandProcessor.loginHandler.handle(input);
+        /**
+         * Validate credentials and generate a JWT token via the login handler
+         */
+        String token = usersCommandProcessor.loginHandler.handle(input);
 
+        /**
+         * Create a secure HTTP-only cookie to store the JWT, preventing XSS access
+         */
         ResponseCookie cookie = ResponseCookie.from("jwt", token)
                 .httpOnly(true)
-                .secure(false)
+                .secure(false) // Set to true in production with HTTPS
                 .sameSite("Strict")
                 .path("/")
                 .maxAge(Duration.ofDays(1))
@@ -57,7 +66,7 @@ public class UserCommandController {
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-       return ResponseEntity.ok().build();
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/register")
@@ -72,8 +81,14 @@ public class UserCommandController {
                     content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     })
     public ResponseEntity<RegisterOutput> register(@Valid @RequestBody RegisterInput input) {
+        /**
+         * Persist a new user in the system using the register handler logic
+         */
         RegisterOutput output = usersCommandProcessor.registerHandler.handle(input);
 
+        /**
+         * Generate the resource URI for the newly created user profile
+         */
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
@@ -99,6 +114,9 @@ public class UserCommandController {
     @DeleteMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
 
+        /**
+         * Clear the JWT cookie by returning an empty value with a maxAge of 0
+         */
         ResponseCookie cookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
                 .secure(false)
@@ -112,4 +130,3 @@ public class UserCommandController {
         return ResponseEntity.noContent().build();
     }
 }
-

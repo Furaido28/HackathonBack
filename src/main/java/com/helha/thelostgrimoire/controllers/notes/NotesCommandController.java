@@ -22,6 +22,10 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/notes")
 public class NotesCommandController {
+
+    /**
+     * Dependency for handling write operations (Create, Update, Delete) for Notes
+     */
     private final NotesCommandProcessor processor;
 
     public NotesCommandController(NotesCommandProcessor notesCommandProcessor) {
@@ -41,12 +45,21 @@ public class NotesCommandController {
     public ResponseEntity<CreateNotesOutput> createDirectory(
             @Valid @RequestBody CreateNotesInput input) {
 
+        /**
+         * Extract the authenticated user ID from the security principal
+         */
         Long authenticatedUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
+        /**
+         * Assign ownership to the note before processing
+         */
         input.userId = authenticatedUserId;
 
         CreateNotesOutput output = processor.createNotesHandler.handle(input);
 
+        /**
+         * Build the location URI for the newly created resource
+         */
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{noteId}")
@@ -66,8 +79,14 @@ public class NotesCommandController {
     })
     @PutMapping("/{noteId}")
     public ResponseEntity<Void> update(@PathVariable Long noteId, @Valid @RequestBody UpdateNotesInput input) {
+        /**
+         * Retrieve the security principal to ensure the user has authority to update the note
+         */
         Long authenticatedUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
+        /**
+         * Merge path variables and security context data into the input DTO
+         */
         input.userId = authenticatedUserId;
         input.id = noteId;
 
@@ -83,8 +102,12 @@ public class NotesCommandController {
     })
     @DeleteMapping("{noteId}")
     public ResponseEntity<Void> delete(@PathVariable Long noteId) {
+        /**
+         * Perform deletion check by passing both resource ID and requester's ID to the handler
+         */
         Long authUserId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         processor.deleteNotesHandler.handle(noteId, authUserId);
+
         return ResponseEntity.noContent().build();
     }
 }

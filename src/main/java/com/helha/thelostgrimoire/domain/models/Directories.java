@@ -6,6 +6,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class Directories {
-    private int id;
-    private String name;
+    private int id;         // Identification d'un répertoire
+    private String name;    // Nom du répertoire
 }
