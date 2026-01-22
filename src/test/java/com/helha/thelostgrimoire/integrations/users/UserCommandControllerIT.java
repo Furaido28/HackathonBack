@@ -2,13 +2,20 @@ package com.helha.thelostgrimoire.integrations.users;
 
 import com.helha.thelostgrimoire.application.repositories.users.command.login.LoginInput;
 import com.helha.thelostgrimoire.application.repositories.users.command.register.RegisterInput;
+import com.helha.thelostgrimoire.application.users.command.login.LoginInput;
+import com.helha.thelostgrimoire.application.users.command.register.RegisterInput;
+import com.helha.thelostgrimoire.infrastructure.directories.DbDirectories;
+import com.helha.thelostgrimoire.infrastructure.users.DbUsers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
+import java.util.Optional;
+
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -16,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class UserCommandControllerIT extends AbstractUsersIT {
 
     @Test
-    @DisplayName("POST /api/auth/register - 201 - crée un user + Location + body(id,email)")
+    @DisplayName("POST /api/auth/register - 201 - crée un user ET son dossier racine")
     void register_shouldReturnCreated() throws Exception {
         RegisterInput input = new RegisterInput();
         input.name = "Doe";
@@ -31,12 +38,20 @@ public class UserCommandControllerIT extends AbstractUsersIT {
                 .andExpect(header().exists("Location"))
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.email", is("john.doe@example.com")));
+
+        // --- VERIFICATION SUPPLEMENTAIRE ---
+        // On vérifie que le side-effect (création du dossier root) a bien eu lieu
+        DbUsers createdUser = usersRepository.findByEmailAddress("john.doe@example.com").orElseThrow();
+        Optional<DbDirectories> rootDir = directoriesRepository.findByUserIdAndIsRootTrue(createdUser.id);
+
+        assertTrue(rootDir.isPresent(), "Le dossier racine aurait dû être créé automatiquement à l'inscription");
+        assertTrue(rootDir.get().isRoot);
     }
 
     @Test
     @DisplayName("POST /api/auth/login - 200 - renvoie un cookie jwt (HttpOnly)")
     void login_shouldReturnOk_andSetJwtCookie() throws Exception {
-        // Arrange: register d'abord (comme ça pas besoin de connaître ton hashing interne)
+        // Arrange: register d'abord
         RegisterInput reg = new RegisterInput();
         reg.name = "Doe";
         reg.firstName = "John";
@@ -56,8 +71,6 @@ public class UserCommandControllerIT extends AbstractUsersIT {
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("jwt=")))
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("HttpOnly")));
-        // Optionnel:
-        // .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("SameSite=Strict")));
     }
 
     @Test

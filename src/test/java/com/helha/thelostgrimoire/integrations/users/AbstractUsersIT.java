@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.helha.thelostgrimoire.TestcontainersConfiguration;
 import com.helha.thelostgrimoire.application.repositories.users.UserMapper;
 import com.helha.thelostgrimoire.domain.models.Users;
+import com.helha.thelostgrimoire.infrastructure.directories.DbDirectories; // <--- Import
+import com.helha.thelostgrimoire.infrastructure.directories.IDirectoriesRepository; // <--- Import
 import com.helha.thelostgrimoire.infrastructure.users.DbUsers;
 import com.helha.thelostgrimoire.infrastructure.users.IUsersRepository;
 import com.helha.thelostgrimoire.security.JwtService;
@@ -22,7 +24,7 @@ import java.time.LocalDateTime;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
                 "spring.jpa.hibernate.ddl-auto=create-drop",
-                "spring.jpa.show-sql=true"
+                "spring.jpa.show-sql=false"
         }
 )
 @AutoConfigureMockMvc
@@ -32,10 +34,12 @@ public abstract class AbstractUsersIT {
     @Autowired protected ObjectMapper objectMapper;
 
     @Autowired protected IUsersRepository usersRepository;
+    @Autowired protected IDirectoriesRepository directoriesRepository;
     @Autowired protected JwtService jwtService;
 
     @BeforeEach
     void cleanDb() {
+        directoriesRepository.deleteAll();
         usersRepository.deleteAll();
     }
 
@@ -46,7 +50,17 @@ public abstract class AbstractUsersIT {
         user.emailAddress = email;
         user.hashPassword = "password123";
         user.createdAt = LocalDateTime.now();
-        return usersRepository.save(user);
+        DbUsers savedUser = usersRepository.save(user);
+
+        DbDirectories root = new DbDirectories();
+        root.userId = savedUser.id;
+        root.name = "root";
+        root.isRoot = true;
+        root.parentDirectoryId = null;
+        root.createdAt = LocalDateTime.now();
+        directoriesRepository.save(root);
+
+        return savedUser;
     }
 
     protected Cookie jwtCookieFor(DbUsers savedUser) {

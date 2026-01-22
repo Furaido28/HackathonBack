@@ -5,8 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -19,14 +18,22 @@ class NotesQueryControllerIT extends AbstractNotesIT {
     class ReadOperations {
 
         @Test
-        @DisplayName("200 - Récupérer toutes les notes")
-        void shouldGetAllNotes() throws Exception {
-            createNoteInDb("Note 1", "C1");
-            createNoteInDb("Note 2", "C2");
+        @DisplayName("200 - Récupérer MES notes uniquement (filtrage par user)")
+        void shouldGetOnlyMyNotes() throws Exception {
+            // GIVEN : 2 notes à moi
+            createNoteInDb("My Note 1", "C1");
+            createNoteInDb("My Note 2", "C2");
 
-            mockMvc.perform(get("/api/notes").cookie(jwtCookie))
+            // ET : 1 note d'un autre utilisateur (le "Hacker")
+            createHackerNote();
+
+            // WHEN : J'appelle /api/notes/me
+            mockMvc.perform(get("/api/notes/me").cookie(jwtCookie))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.notes", hasSize(2)));
+                    // THEN : Je ne dois recevoir que mes 2 notes, pas celle du hacker (total 3 en base, mais 2 reçues)
+                    .andExpect(jsonPath("$.notes", hasSize(2)))
+                    .andExpect(jsonPath("$.notes[0].name", is("My Note 1")))
+                    .andExpect(jsonPath("$.notes[1].name", is("My Note 2")));
         }
 
         @Test
@@ -43,6 +50,7 @@ class NotesQueryControllerIT extends AbstractNotesIT {
         @DisplayName("200 - Récupérer par Dossier")
         void shouldGetNotesByDirectory() throws Exception {
             createNoteInDb("In Dir", "Content");
+            // On vérifie que la note est bien trouvée dans le dossier
             mockMvc.perform(get("/api/notes/directory/{id}", savedDirectory.id).cookie(jwtCookie))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.notes", hasSize(1)));
@@ -65,50 +73,52 @@ class NotesQueryControllerIT extends AbstractNotesIT {
     }
 
     @Nested
-    @DisplayName("Metadata test")
+    @DisplayName("Metadata & Stats")
     class MetadataTests {
-        @Test
-        @DisplayName("200 - Vérification des métadonnées (Mots, Lignes, Taille)")
-        void shouldReturnCorrectMetadata() throws Exception {
-            // "Hello World" (11 chars) + "\n" (1 char) + "Test" (4 chars)
-            // Total attendu : 16 caractères, 3 mots, 2 lignes
-            String content = "Hello World\nTest";
 
+        @Test
+        @DisplayName("200 - [Legacy] Vérification métadonnées via GET /id")
+        void shouldReturnCorrectMetadata_OnStandardGet() throws Exception {
+            String content = "Hello World\nTest"; // 3 mots, 2 lignes, 16 chars
             DbNotes savedNote = createNoteInDb("Meta Note", content);
 
-            // WHEN & THEN : On récupère la note via l'API et on vérifie les champs calculés
             mockMvc.perform(get("/api/notes/{id}", savedNote.id)
                             .cookie(jwtCookie))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.name", is("Meta Note")))
-                    .andExpect(jsonPath("$.content", is(content)))
-
-                    // 1. Vérification du nombre de mots (Hello, World, Test)
                     .andExpect(jsonPath("$.wordCount", is(3)))
-
-                    // 2. Vérification du nombre de lignes
                     .andExpect(jsonPath("$.lineCount", is(2)))
-
-                    // 3. Vérification du nombre de caractères
-                    .andExpect(jsonPath("$.characterCount", is(16)))
-
-                    // 4. Vérification de la taille en octets (Pour de l'ASCII simple, 1 char = 1 octet)
                     .andExpect(jsonPath("$.byteSize", is(16)));
+        }
+
+        @Test
+        @DisplayName("200 - [New Endpoint] Récupérer métadonnées via /metadata (Léger)")
+        void shouldReturnMetadata_OnDedicatedEndpoint() throws Exception {
+            // GIVEN
+            String content = "Lorem Ipsum"; // 2 mots, 1 ligne, 11 chars
+            DbNotes savedNote = createNoteInDb("Lightweight Note", content);
+
+            // WHEN : Appel de la route dédiée /metadata
+            mockMvc.perform(get("/api/notes/{id}/metadata", savedNote.id)
+                            .cookie(jwtCookie))
+                    .andExpect(status().isOk())
+                    // THEN : Les stats sont là
+                    .andExpect(jsonPath("$.id", is(savedNote.id.intValue())))
+                    .andExpect(jsonPath("$.name", is("Lightweight Note")))
+                    .andExpect(jsonPath("$.wordCount", is(2)))
+                    .andExpect(jsonPath("$.characterCount", is(11)))
+                    // ET SURTOUT : Le contenu n'est PAS là (ou null) car c'est un DTO léger
+                    .andExpect(jsonPath("$.content").doesNotExist());
         }
 
         @Test
         @DisplayName("200 - Vérification métadonnées sur contenu vide")
         void shouldReturnZeroMetadata_WhenContentIsEmpty() throws Exception {
-            // GIVEN : Une note vide
             DbNotes savedNote = createNoteInDb("Empty Note", "");
 
-            // WHEN & THEN
-            mockMvc.perform(get("/api/notes/{id}", savedNote.id)
+            mockMvc.perform(get("/api/notes/{id}/metadata", savedNote.id)
                             .cookie(jwtCookie))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.wordCount", is(0)))
-                    .andExpect(jsonPath("$.lineCount", is(0)))
-                    .andExpect(jsonPath("$.characterCount", is(0)))
                     .andExpect(jsonPath("$.byteSize", is(0)));
         }
     }

@@ -43,6 +43,7 @@ public abstract class AbstractNotesIT {
 
     protected Cookie jwtCookie;
     protected DbUsers savedUser;
+    protected DbDirectories savedRootDirectory; // <--- Nouveau
     protected DbDirectories savedDirectory;
 
     @BeforeEach
@@ -60,21 +61,31 @@ public abstract class AbstractNotesIT {
         user.createdAt = LocalDateTime.now();
         savedUser = usersRepository.save(user);
 
-        // 2. Création Directory
+        // 2. Création du Dossier RACINE (Indispensable maintenant)
+        DbDirectories root = new DbDirectories();
+        root.name = "root";
+        root.userId = savedUser.id;
+        root.isRoot = true; // <--- Important
+        root.parentDirectoryId = null;
+        root.createdAt = LocalDateTime.now();
+        savedRootDirectory = directoriesRepository.save(root);
+
+        // 3. Création d'un sous-dossier standard pour les tests classiques
         DbDirectories dir = new DbDirectories();
         dir.name = "My Directory";
         dir.userId = savedUser.id;
+        dir.parentDirectoryId = savedRootDirectory.id; // Attaché à la racine
         dir.createdAt = LocalDateTime.now();
         savedDirectory = directoriesRepository.save(dir);
 
-        // 3. Token JWT
+        // 4. Token JWT
         Users domainUser = UserMapper.toDomain(savedUser);
         String token = jwtService.generateToken(domainUser);
         jwtCookie = new Cookie("jwt", token);
     }
 
     // ==========================================
-    // 🛠️ HELPERS (Protected pour l'héritage)
+    // 🛠️ HELPERS
     // ==========================================
     protected DbNotes createNoteInDb(String name, String content) {
         DbNotes note = new DbNotes();
@@ -96,9 +107,18 @@ public abstract class AbstractNotesIT {
         hacker.createdAt = LocalDateTime.now();
         hacker = usersRepository.save(hacker);
 
+        // Le hacker a aussi besoin d'une racine !
+        DbDirectories hackerRoot = new DbDirectories();
+        hackerRoot.name = "root";
+        hackerRoot.userId = hacker.id;
+        hackerRoot.isRoot = true;
+        hackerRoot.createdAt = LocalDateTime.now();
+        directoriesRepository.save(hackerRoot);
+
         DbDirectories hackerDir = new DbDirectories();
         hackerDir.name = "Hacker Dir";
         hackerDir.userId = hacker.id;
+        hackerDir.parentDirectoryId = hackerRoot.id;
         hackerDir.createdAt = LocalDateTime.now();
         hackerDir = directoriesRepository.save(hackerDir);
 
