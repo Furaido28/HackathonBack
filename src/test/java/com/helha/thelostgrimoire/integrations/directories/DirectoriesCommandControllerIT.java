@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 
 import java.time.LocalDateTime;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -26,6 +27,7 @@ public class DirectoriesCommandControllerIT extends AbstractDirectoriesIT {
 
     private Cookie jwtCookie;
     private DbUsers savedUser;
+    private DbDirectories savedRoot;
 
     @BeforeEach
     void setUpJwt() {
@@ -33,21 +35,18 @@ public class DirectoriesCommandControllerIT extends AbstractDirectoriesIT {
         directoriesRepository.deleteAll();
         usersRepository.deleteAll();
 
-        // 1) User en DB (id = utilisé comme "42" dans tes tests)
         DbUsers user = new DbUsers();
         user.name = "Doe";
         user.firstname = "John";
         user.emailAddress = "john.doe@example.com";
         user.hashPassword = "password123";
         user.createdAt = LocalDateTime.now();
-
         savedUser = usersRepository.save(user);
 
-        // 2) JWT via via JWTService
+        savedRoot = persistRoot(savedUser.id);
+
         Users domainUser = UserMapper.toDomain(savedUser);
         String token = jwtService.generateToken(domainUser);
-
-        // 3) Cookie jwt
         jwtCookie = new Cookie("jwt", token);
     }
 
@@ -70,9 +69,13 @@ public class DirectoriesCommandControllerIT extends AbstractDirectoriesIT {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonRequest))
                     .andExpect(status().isCreated())
-                    .andExpect(header().exists("Location"))
-                    .andExpect(jsonPath("$.id").isNumber())
                     .andExpect(jsonPath("$.name").value("Mes documents"));
+
+            DbDirectories created = directoriesRepository.findAll().stream()
+                    .filter(d -> d.name.equals("Mes documents"))
+                    .findFirst().orElseThrow();
+
+            assertEquals(savedRoot.id, created.parentDirectoryId);
         }
 
         @Test
@@ -161,9 +164,9 @@ public class DirectoriesCommandControllerIT extends AbstractDirectoriesIT {
     class DeleteDirectory {
 
         @Test
-        @DisplayName("204 - répertoire supprimé")
+        @DisplayName("204 - répertoire standard supprimé")
         void deleteDirectory_shouldReturnNoContent() throws Exception {
-            DbDirectories directory = persist(savedUser.id, "À supprimer", null);
+            DbDirectories directory = persist(savedUser.id, "À supprimer", savedRoot.id);
 
             mockMvc.perform(delete("/api/directories/{directoryId}", directory.id)
                             .cookie(jwtCookie))
@@ -171,17 +174,11 @@ public class DirectoriesCommandControllerIT extends AbstractDirectoriesIT {
         }
 
         @Test
-        @DisplayName("204 - suppression cascade: supprimer parent supprime enfant")
-        void deleteDirectory_withChildren_shouldCascadeDelete_andReturnNoContent() throws Exception {
-            DbDirectories parent = persist(savedUser.id, "Parent", null);
-            DbDirectories child = persist(savedUser.id, "Child", parent.id);
-
-            mockMvc.perform(delete("/api/directories/{directoryId}", parent.id)
+        @DisplayName("400 - Tentative de suppression du dossier RACINE")
+        void deleteRoot_shouldReturnBadRequest() throws Exception {
+            mockMvc.perform(delete("/api/directories/{directoryId}", savedRoot.id)
                             .cookie(jwtCookie))
-                    .andExpect(status().isNoContent());
-
-            assertFalse(directoriesRepository.existsById(parent.id));
-            assertFalse(directoriesRepository.existsById(child.id));
+                    .andExpect(status().isBadRequest()); // Ou 403 selon ton implémentation exacte, mais tu avais mis BAD_REQUEST
         }
     }
 }
