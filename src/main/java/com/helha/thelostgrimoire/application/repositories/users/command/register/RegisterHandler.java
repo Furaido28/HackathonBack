@@ -1,8 +1,8 @@
 package com.helha.thelostgrimoire.application.repositories.users.command.register;
 
 import com.helha.thelostgrimoire.application.repositories.utils.ICommandHandler;
-import com.helha.thelostgrimoire.infrastructure.directories.DbDirectories; // <--- Import
-import com.helha.thelostgrimoire.infrastructure.directories.IDirectoriesRepository; // <--- Import
+import com.helha.thelostgrimoire.infrastructure.directories.DbDirectories;
+import com.helha.thelostgrimoire.infrastructure.directories.IDirectoriesRepository;
 import com.helha.thelostgrimoire.infrastructure.users.DbUsers;
 import com.helha.thelostgrimoire.infrastructure.users.IUsersRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,10 +15,9 @@ import java.time.LocalDateTime;
 public class RegisterHandler implements ICommandHandler<RegisterInput, RegisterOutput> {
 
     private final IUsersRepository repository;
-    private final IDirectoriesRepository directoriesRepository; // <--- Nouvelle dépendance
+    private final IDirectoriesRepository directoriesRepository;
     private final PasswordEncoder encoder;
 
-    // Mise à jour du constructeur pour injecter le repo des dossiers
     public RegisterHandler(IUsersRepository repository,
                            IDirectoriesRepository directoriesRepository,
                            PasswordEncoder encoder) {
@@ -28,17 +27,19 @@ public class RegisterHandler implements ICommandHandler<RegisterInput, RegisterO
     }
 
     @Override
-    @Transactional // Très important ici : si la création du dossier échoue, le user est annulé (Rollback)
+    @Transactional // Ensures atomicity: if directory creation fails, the user creation is rolled back.
     public RegisterOutput handle(RegisterInput input) {
 
+        // Perform initial syntax and presence checks on input data.
         validate(input);
 
-        // Vérifier que l'email n'existe pas déjà
+        // Conflict check: Ensure the email address is not already registered in the system.
         if (repository.findByEmailAddress(input.email).isPresent()) {
             throw new IllegalStateException("Email already in use");
         }
 
-        // 1. Créer l'utilisateur
+        // 1. User Creation
+        // Initialize the new user entity with a hashed password and normalized email address.
         DbUsers newUser = new DbUsers();
         newUser.name = input.name;
         newUser.firstname = input.firstName;
@@ -46,20 +47,21 @@ public class RegisterHandler implements ICommandHandler<RegisterInput, RegisterO
         newUser.hashPassword = encoder.encode(input.password);
         newUser.createdAt = LocalDateTime.now();
 
-        // Save → retourne un DbUsers avec id généré
+        // Save the user to generate the primary key (ID) needed for the directory relationship.
         DbUsers savedUser = repository.save(newUser);
 
-        // 2. CRÉATION AUTOMATIQUE DU DOSSIER RACINE
+        // 2. AUTOMATIC ROOT DIRECTORY CREATION
+        // Every new user must have a root directory to store their personal notes.
         DbDirectories rootDir = new DbDirectories();
-        rootDir.name = "root";    // Nom système, tu pourras afficher "Mes Dossiers" en front
+        rootDir.name = "root";
         rootDir.userId = savedUser.id;
-        rootDir.parentDirectoryId = null;  // La racine n'a pas de parent
-        rootDir.isRoot = true;    // C'est le dossier racine !
+        rootDir.parentDirectoryId = null;  // Root directory has no parent.
+        rootDir.isRoot = true;             // Mark as the entry point for the user's file system.
         rootDir.createdAt = LocalDateTime.now();
 
         directoriesRepository.save(rootDir);
 
-        // 3. Préparer la réponse
+        // 3. Prepare the response DTO
         RegisterOutput output = new RegisterOutput();
         output.id = savedUser.id;
         output.email = savedUser.emailAddress;
@@ -67,6 +69,9 @@ public class RegisterHandler implements ICommandHandler<RegisterInput, RegisterO
         return output;
     }
 
+    /**
+     * Internal validation logic to ensure data integrity before persistence.
+     */
     private void validate(RegisterInput input) {
         if (input == null) throw new IllegalArgumentException("Input is required");
 

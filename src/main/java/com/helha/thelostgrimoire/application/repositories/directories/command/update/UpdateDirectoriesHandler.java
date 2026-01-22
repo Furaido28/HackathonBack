@@ -18,17 +18,19 @@ public class UpdateDirectoriesHandler implements IEffectCommandHandler<UpdateDir
 
     @Override
     public void handle(UpdateDirectoriesInput input) {
+        // Fetch the existing directory by ID; throw a custom exception if not found.
         DbDirectories directory = directoriesRepository.findById(input.id)
                 .orElseThrow(() -> new DirectoriesNotFound(input.id));
 
+        // Security check: Verify that the authenticated user owns the directory before allowing modifications.
         if (!directory.userId.equals(input.userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to update this directory");
         }
 
+        // Validate and process name update.
         if (input.name != null && !input.name.isBlank()) {
-            // --- NOUVELLE VÉRIFICATION DE DOUBLON ---
-            // On vérifie si un dossier avec ce nom existe déjà au même endroit
-            // MAIS on exclut le dossier actuel (d'où le "id != input.id")
+            // Uniqueness check: Ensure the new name is not already taken by another directory in the same folder.
+            // The 'IdNot' condition prevents the check from conflicting with the directory currently being updated.
             boolean duplicateExists = directoriesRepository.existsByNameAndParentDirectoryIdAndUserIdAndIdNot(
                     input.name,
                     directory.parentDirectoryId,
@@ -46,6 +48,7 @@ public class UpdateDirectoriesHandler implements IEffectCommandHandler<UpdateDir
             directory.name = input.name;
         }
 
+        // Persist the updated directory entity back to the database.
         directoriesRepository.save(directory);
     }
 }

@@ -25,14 +25,18 @@ public class GetNoteByIdHandler
     @Override
     public GetNoteByIdOutput handle(GetNoteByIdInput request) {
 
+        // Retrieve the current user ID from the context for authorization purposes.
         Long currentUserId = CurrentUserContext.getUserId();
 
+        // Attempt to find the specific note by ID. Throw a 404 Not Found exception if it does not exist.
         DbNotes entity = notesRepository.findById(request.id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Notes not found"
                 ));
 
+        // Ownership check: ensure the note belongs to the user attempting to access it.
+        // Returns 403 Forbidden if the user is not the owner.
         if (!entity.userId.equals(currentUserId)) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
@@ -40,6 +44,7 @@ public class GetNoteByIdHandler
             );
         }
 
+        // Map the database entity to the output DTO.
         return modelMapper.map(entity, GetNoteByIdOutput.class);
     }
 }

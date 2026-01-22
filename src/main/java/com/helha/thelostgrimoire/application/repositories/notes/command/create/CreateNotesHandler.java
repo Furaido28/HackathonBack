@@ -28,15 +28,16 @@ public class CreateNotesHandler implements ICommandHandler<CreateNotesInput, Cre
     @Override
     public CreateNotesOutput handle(CreateNotesInput request) {
 
+        // Retrieve the current authenticated user's ID and current timestamp.
         Long userId = CurrentUserContext.getUserId();
         LocalDateTime now = LocalDateTime.now();
 
-        // Variable pour stocker l'ID final du dossier (soit celui demandé, soit la racine)
+        // Variable to hold the final target directory ID (requested ID or root fallback).
         Long targetDirectoryId = request.directoryId;
 
-        // 1. Détermination du dossier cible
+        // 1. Target Directory Determination
         if (targetDirectoryId == null || targetDirectoryId == 0) {
-            // CAS 1 : Pas d'ID fourni -> On récupère le dossier RACINE de l'utilisateur
+            // CASE 1: No ID provided -> Automatically fetch the user's ROOT directory.
             DbDirectories rootDir = directoriesRepository.findByUserIdAndIsRootTrue(userId)
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -45,12 +46,13 @@ public class CreateNotesHandler implements ICommandHandler<CreateNotesInput, Cre
             targetDirectoryId = rootDir.id;
 
         } else {
-            // CAS 2 : Un ID est fourni -> On vérifie qu'il existe et appartient au user
+            // CASE 2: ID provided -> Verify it exists and belongs to the current user.
             DbDirectories directory = directoriesRepository.findById(targetDirectoryId)
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND, "Directory not found"
                     ));
 
+            // Security check: prevent creating notes in directories owned by other users.
             if (!directory.userId.equals(userId)) {
                 throw new ResponseStatusException(
                         HttpStatus.FORBIDDEN, "You cannot create a note in a directory that is not yours"
@@ -58,11 +60,12 @@ public class CreateNotesHandler implements ICommandHandler<CreateNotesInput, Cre
             }
         }
 
-        // --- NOUVELLE VÉRIFICATION : Unicité du nom dans le dossier ---
+        // --- Name Uniqueness Verification ---
+        // Ensure no note with the same name already exists within the target directory.
         boolean nameExists = notesRepository.existsByNameAndDirectoryId(request.name, targetDirectoryId);
 
         if (nameExists) {
-            // On renvoie une erreur 409 Conflict
+            // Return 409 Conflict if a duplicate name is found in the same folder.
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "A note with this name already exists in the destination directory"
@@ -70,16 +73,18 @@ public class CreateNotesHandler implements ICommandHandler<CreateNotesInput, Cre
         }
         // --------------------------------------------------------------
 
-        // 2. Création de l'entité
+        // 2. Entity Initialization
+        // Build the note entity with calculated IDs and default empty content.
         DbNotes entity = new DbNotes();
         entity.userId = userId;
         entity.directoryId = targetDirectoryId;
         entity.name = request.name;
-        entity.content = ""; // Contenu vide par défaut
+        entity.content = ""; // Default empty content to avoid null issues during metadata calculation.
         entity.createdAt = now;
         entity.updatedAt = now;
 
-        // 3. Sauvegarde
+        // 3. Persist to Database
+        // Save the entity and map it to the response DTO.
         DbNotes saved = notesRepository.save(entity);
 
         return modelMapper.map(saved, CreateNotesOutput.class);

@@ -26,13 +26,16 @@ public class CreateDirectoriesHandler implements ICommandHandler<CreateDirectori
         LocalDateTime now = LocalDateTime.now();
         Long finalParentId = input.parentDirectoryId;
 
-        // 1. Gestion du Parent
+        // 1. Parent Management
+        // Determine if the new directory should be attached to a specific parent or the user's root.
         if (finalParentId != null) {
+            // Attempt to retrieve the specified parent directory. Throw 404 if not found.
             DbDirectories parent = repository.findById(finalParentId)
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND, "Parent directory not found"
                     ));
 
+            // Security check: ensure the current user owns the parent directory.
             if (!parent.userId.equals(input.userId)) {
                 throw new ResponseStatusException(
                         HttpStatus.FORBIDDEN,
@@ -40,6 +43,7 @@ public class CreateDirectoriesHandler implements ICommandHandler<CreateDirectori
                 );
             }
         } else {
+            // Fallback: if no parent ID is provided, fetch the user's root directory to use as parent.
             DbDirectories rootDir = repository.findByUserIdAndIsRootTrue(input.userId)
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -48,11 +52,13 @@ public class CreateDirectoriesHandler implements ICommandHandler<CreateDirectori
             finalParentId = rootDir.id;
         }
 
-        // Vérification des noms
+        // Name verification
+        // Check for uniqueness: ensure no directory with the same name exists in the target folder for this user.
         boolean duplicateExists = repository.existsByNameAndParentDirectoryIdAndUserId(
                 input.name, finalParentId, input.userId
         );
 
+        // Block creation with a 409 Conflict error if a duplicate is found.
         if (duplicateExists) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -60,6 +66,7 @@ public class CreateDirectoriesHandler implements ICommandHandler<CreateDirectori
             );
         }
 
+        // Create the directory entity. Always set isRoot to false since this is a subdirectory.
         DbDirectories entity = new DbDirectories();
         entity.userId = input.userId;
         entity.name = input.name;
@@ -67,6 +74,7 @@ public class CreateDirectoriesHandler implements ICommandHandler<CreateDirectori
         entity.isRoot = false;
         entity.createdAt = now;
 
+        // Save the entity to the database and map the result to the output DTO.
         DbDirectories savedEntity = repository.save(entity);
         return modelMapper.map(savedEntity, CreateDirectoriesOutput.class);
     }
