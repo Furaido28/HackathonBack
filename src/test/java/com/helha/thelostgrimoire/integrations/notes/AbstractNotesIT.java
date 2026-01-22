@@ -43,11 +43,12 @@ public abstract class AbstractNotesIT {
 
     protected Cookie jwtCookie;
     protected DbUsers savedUser;
-    protected DbDirectories savedRootDirectory; // <--- Nouveau
+    protected DbDirectories savedRootDirectory;
     protected DbDirectories savedDirectory;
 
     @BeforeEach
     void setUp() {
+        // Nettoyage propre (Enfant -> Parent)
         notesRepository.deleteAll();
         directoriesRepository.deleteAll();
         usersRepository.deleteAll();
@@ -61,20 +62,20 @@ public abstract class AbstractNotesIT {
         user.createdAt = LocalDateTime.now();
         savedUser = usersRepository.save(user);
 
-        // 2. Création du Dossier RACINE (Indispensable maintenant)
+        // 2. Création Root
         DbDirectories root = new DbDirectories();
         root.name = "root";
         root.userId = savedUser.id;
-        root.isRoot = true; // <--- Important
+        root.isRoot = true;
         root.parentDirectoryId = null;
         root.createdAt = LocalDateTime.now();
         savedRootDirectory = directoriesRepository.save(root);
 
-        // 3. Création d'un sous-dossier standard pour les tests classiques
+        // 3. Création Sous-dossier
         DbDirectories dir = new DbDirectories();
         dir.name = "My Directory";
         dir.userId = savedUser.id;
-        dir.parentDirectoryId = savedRootDirectory.id; // Attaché à la racine
+        dir.parentDirectoryId = savedRootDirectory.id;
         dir.createdAt = LocalDateTime.now();
         savedDirectory = directoriesRepository.save(dir);
 
@@ -84,9 +85,6 @@ public abstract class AbstractNotesIT {
         jwtCookie = new Cookie("jwt", token);
     }
 
-    // ==========================================
-    // 🛠️ HELPERS
-    // ==========================================
     protected DbNotes createNoteInDb(String name, String content) {
         DbNotes note = new DbNotes();
         note.name = name;
@@ -107,7 +105,6 @@ public abstract class AbstractNotesIT {
         hacker.createdAt = LocalDateTime.now();
         hacker = usersRepository.save(hacker);
 
-        // Le hacker a aussi besoin d'une racine !
         DbDirectories hackerRoot = new DbDirectories();
         hackerRoot.name = "root";
         hackerRoot.userId = hacker.id;
