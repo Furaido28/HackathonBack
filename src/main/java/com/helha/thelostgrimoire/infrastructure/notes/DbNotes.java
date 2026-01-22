@@ -47,19 +47,55 @@ public class DbNotes {
 
     // Nombre de caractères
     public int getCharacterCount() {
-        return content == null ? 0 : content.length();
+        if (content == null) return 0;
+        return stripMarkdown(content).length();
     }
 
     // Nombre de mots (séparation par espace blanc)
     public int getWordCount() {
-        if (content == null || content.isBlank()) return 0;
-        return content.trim().split("\\s+").length;
+        String clean = stripMarkdown(content);
+        if (clean.isBlank()) return 0;
+        return clean.trim().split("\\s+").length;
     }
 
-    // Nombre de lignes
+    // Nombre de ligne
     public int getLineCount() {
-        if (content == null || content.isEmpty()) return 0;
-        // On compte les sauts de ligne (\n, \r, ou \r\n)
-        return content.split("\r\n|\r|\n", -1).length;
+        String clean = stripMarkdown(content);
+        if (clean.isEmpty()) return 0;
+        return clean.split("\r\n|\r|\n", -1).length;
+    }
+
+    private String stripMarkdown(String text) {
+        if (text == null) return "";
+
+        return text
+                // Titres (#, ##, ###...)
+                .replaceAll("(?m)^#{1,6}\\s*", "")
+
+                // Gras / Italique / Barré (** __ * _ ~~)
+                .replaceAll("(\\*\\*|__)(.*?)\\1", "$2")
+                .replaceAll("(\\*|_)(.*?)\\1", "$2")
+                .replaceAll("~~(.*?)~~", "$1")
+
+                // Liens [texte](url)
+                .replaceAll("\\[(.*?)\\]\\(.*?\\)", "$1")
+
+                // Images ![alt](url)
+                .replaceAll("!\\[(.*?)\\]\\(.*?\\)", "$1")
+
+                // Inline code `code`
+                .replaceAll("`([^`]*)`", "$1")
+
+                // Blocs de code ``` ```
+                .replaceAll("(?s)```.*?```", "")
+
+                // Citations >
+                .replaceAll("(?m)^>\\s*", "")
+
+                // Listes - * +
+                .replaceAll("(?m)^[-*+]\\s+", "")
+
+                // Liens automatiques <http://...>
+                .replaceAll("<(http[^>]*)>", "$1");
     }
 }
