@@ -6,6 +6,6 @@ import java.util.List;
 
 public interface INotesRepository extends JpaRepository<DbNotes, Long> {
     List<DbNotes> findAllByDirectoryId(Long directoryId);
-    List<DbNotes> findAllByUserId(Long userId);
-    List<DbNotes> findByUserIdAndDirectoryId(Long userId, Long directoryId);
+    List<DbNotes> findAllByUserIdOrderByNameAsc(Long userId);
+    List<DbNotes> findAllByDirectoryIdOrderByNameAsc(Long directoryId);
 }

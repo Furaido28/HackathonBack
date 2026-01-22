@@ -20,10 +20,11 @@ public class GetAllDirectoriesHandler implements IQueryHandler<GetAllDirectorieO
 
     @Override
     public GetAllDirectorieOutput handle() {
-        List<DbDirectories> entities = directoriesRepository.findAll();
+        List<DbDirectories> entities = directoriesRepository.findAll(
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")
+        );
 
         GetAllDirectorieOutput output = new GetAllDirectorieOutput();
-
         for (DbDirectories entity : entities) {
             output.directories.add(modelMapper.map(entity, GetAllDirectorieOutput.Directory.class));
         }
