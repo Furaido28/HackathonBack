@@ -35,6 +35,10 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+                        // --- AJOUTER CETTE LIGNE ---
+                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ASYNC).permitAll()
+                        // ---------------------------
+
                         // Swagger
                         .requestMatchers(
                                 "/swagger-ui/**",
@@ -46,7 +50,6 @@ public class SecurityConfig {
                         // Auth publique
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // (optionnel mais pratique pour CORS/preflight)
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Le reste protégé

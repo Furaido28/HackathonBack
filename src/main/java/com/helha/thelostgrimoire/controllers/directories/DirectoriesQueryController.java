@@ -1,9 +1,9 @@
 package com.helha.thelostgrimoire.controllers.directories;
 
-import com.helha.thelostgrimoire.application.directories.query.DirectoriesQueryProcessor;
-import com.helha.thelostgrimoire.application.directories.query.getAll.GetAllDirectorieOutput;
-import com.helha.thelostgrimoire.application.directories.query.getAllByUserId.GetAllDirectoriesByUserIdInput;
-import com.helha.thelostgrimoire.application.directories.query.getAllByUserId.GetAllDirectoriesByUserIdOutput;
+import com.helha.thelostgrimoire.application.repositories.directories.query.DirectoriesQueryProcessor;
+import com.helha.thelostgrimoire.application.repositories.directories.query.getAll.GetAllDirectorieOutput;
+import com.helha.thelostgrimoire.application.repositories.directories.query.getAllByUserId.GetAllDirectoriesByUserIdInput;
+import com.helha.thelostgrimoire.application.repositories.directories.query.getAllByUserId.GetAllDirectoriesByUserIdOutput;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

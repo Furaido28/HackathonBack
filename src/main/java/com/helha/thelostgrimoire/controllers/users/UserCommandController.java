@@ -1,9 +1,9 @@
 package com.helha.thelostgrimoire.controllers.users;
 
-import com.helha.thelostgrimoire.application.users.command.UsersCommandProcessor;
-import com.helha.thelostgrimoire.application.users.command.login.LoginInput;
-import com.helha.thelostgrimoire.application.users.command.register.RegisterInput;
-import com.helha.thelostgrimoire.application.users.command.register.RegisterOutput;
+import com.helha.thelostgrimoire.application.repositories.users.command.UsersCommandProcessor;
+import com.helha.thelostgrimoire.application.repositories.users.command.login.LoginInput;
+import com.helha.thelostgrimoire.application.repositories.users.command.register.RegisterInput;
+import com.helha.thelostgrimoire.application.repositories.users.command.register.RegisterOutput;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

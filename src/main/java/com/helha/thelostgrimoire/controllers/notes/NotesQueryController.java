@@ -1,15 +1,15 @@
 package com.helha.thelostgrimoire.controllers.notes;
 
-import com.helha.thelostgrimoire.application.notes.query.GetAllByDirectoriesByUserId.GetAllByDirectoriesByUserIdInput;
-import com.helha.thelostgrimoire.application.notes.query.GetAllByDirectoriesByUserId.GetAllByDirectoriesByUserIdOutput;
-import com.helha.thelostgrimoire.application.notes.query.NotesQueryProcessor;
-import com.helha.thelostgrimoire.application.notes.query.getAll.GetAllNotesOutput;
+import com.helha.thelostgrimoire.application.repositories.notes.query.GetAllByDirectoriesByUserId.GetAllByDirectoriesByUserIdInput;
+import com.helha.thelostgrimoire.application.repositories.notes.query.GetAllByDirectoriesByUserId.GetAllByDirectoriesByUserIdOutput;
+import com.helha.thelostgrimoire.application.repositories.notes.query.NotesQueryProcessor;
+import com.helha.thelostgrimoire.application.repositories.notes.query.getAll.GetAllNotesOutput;
 
-import com.helha.thelostgrimoire.application.notes.query.getById.GetNoteByIdInput;
-import com.helha.thelostgrimoire.application.notes.query.getById.GetNoteByIdOutput;
+import com.helha.thelostgrimoire.application.repositories.notes.query.getById.GetNoteByIdInput;
+import com.helha.thelostgrimoire.application.repositories.notes.query.getById.GetNoteByIdOutput;
 
-import com.helha.thelostgrimoire.application.notes.query.getMetaData.GetNoteMetadataInput;
-import com.helha.thelostgrimoire.application.notes.query.getMetaData.GetNoteMetadataOutput;
+import com.helha.thelostgrimoire.application.repositories.notes.query.getMetaData.GetNoteMetadataInput;
+import com.helha.thelostgrimoire.application.repositories.notes.query.getMetaData.GetNoteMetadataOutput;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

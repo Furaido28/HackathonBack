@@ -1,10 +1,9 @@
 package com.helha.thelostgrimoire.controllers.directories;
 
-import com.helha.thelostgrimoire.application.directories.command.DirectoriesCommandProcessor;
-import com.helha.thelostgrimoire.application.directories.command.create.CreateDirectoriesInput;
-import com.helha.thelostgrimoire.application.directories.command.create.CreateDirectoriesOutput;
-import com.helha.thelostgrimoire.application.directories.command.update.UpdateDirectoriesInput;
-import com.helha.thelostgrimoire.controllers.directories.exceptions.DirectoriesNotFound;
+import com.helha.thelostgrimoire.application.repositories.directories.command.DirectoriesCommandProcessor;
+import com.helha.thelostgrimoire.application.repositories.directories.command.create.CreateDirectoriesInput;
+import com.helha.thelostgrimoire.application.repositories.directories.command.create.CreateDirectoriesOutput;
+import com.helha.thelostgrimoire.application.repositories.directories.command.update.UpdateDirectoriesInput;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
