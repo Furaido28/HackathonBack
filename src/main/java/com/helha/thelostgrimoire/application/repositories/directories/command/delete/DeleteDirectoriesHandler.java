@@ -18,17 +18,21 @@ public class DeleteDirectoriesHandler {
     @Transactional
     public void handle(Long directoryId, Long authenticatedUserId) {
 
+        // Retrieve the directory by ID; throw 404 Not Found if it does not exist.
         DbDirectories directory = directoriesRepository.findById(directoryId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Directory not found"));
 
+        // Ownership verification: ensure the authenticated user owns the directory before deletion.
         if (!directory.userId.equals(authenticatedUserId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to delete this directory");
         }
 
+        // Integrity constraint: prevent the deletion of the user's root directory.
         if (directory.isRoot) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot delete the root directory");
         }
 
+        // Perform the deletion in the database.
         directoriesRepository.delete(directory);
     }
 }

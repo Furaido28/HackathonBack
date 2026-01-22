@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/users")
 public class UserQueryController {
+
+    /**
+     * Dependency for handling read-only user queries
+     */
     private final UsersQueryProcessor usersQueryProcessor;
 
     public UserQueryController(UsersQueryProcessor usersQueryProcessor) {
@@ -35,6 +39,9 @@ public class UserQueryController {
     })
     @GetMapping("/me")
     public ResponseEntity<GetMeOutput> getMe() {
+        /**
+         * Fetches the profile data of the currently authenticated user
+         */
         GetMeOutput output = usersQueryProcessor.getMeHandler.handle();
 
         return ResponseEntity.ok(output);

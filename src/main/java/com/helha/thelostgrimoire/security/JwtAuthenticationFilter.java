@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
+/**
+ * Filter that intercepts every request to validate JWT tokens stored in cookies
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -24,6 +27,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtService = jwtService;
     }
 
+    /**
+     * Helper method to find and retrieve the 'jwt' cookie from the request
+     */
     private String extractJwtFromCookie(HttpServletRequest request) {
         if (request.getCookies() == null) return null;
 
@@ -40,11 +46,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         try {
+            /**
+             * Attempt to extract and validate the token for each incoming request
+             */
             String token = extractJwtFromCookie(request);
 
             if (token != null && jwtService.isTokenValid(token)) {
                 Long userId = jwtService.extractUserId(token);
 
+                /**
+                 * Build the authentication token and inject it into Spring Security's context
+                 */
                 var auth = new UsernamePasswordAuthenticationToken(
                         userId, null, Collections.emptyList()
                 );
@@ -52,11 +64,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
                 // Pour tes handlers CQRS
+                /**
+                 * Populate the custom thread-local context for use within CQRS command/query handlers
+                 */
                 CurrentUserContext.setUserId(userId);
             }
 
+            /**
+             * Continue the filter chain execution
+             */
             filterChain.doFilter(request, response);
         } finally {
+            /**
+             * Critical: Clear the ThreadLocal context to prevent memory leaks and data cross-contamination
+             */
             CurrentUserContext.clear();
         }
     }

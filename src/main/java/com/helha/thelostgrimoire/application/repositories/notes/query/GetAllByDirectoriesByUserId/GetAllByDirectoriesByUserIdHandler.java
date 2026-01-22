@@ -28,16 +28,19 @@ public class GetAllByDirectoriesByUserIdHandler implements IQueryHandlerIO<GetAl
 
     @Override
     public GetAllByDirectoriesByUserIdOutput handle(GetAllByDirectoriesByUserIdInput input) {
+        // Retrieve the directory by ID; throw a custom 404 exception if it does not exist.
         DbDirectories directory = directoriesRepository.findById(input.directoryId)
                 .orElseThrow(() -> new DirectoriesNotFound(input.directoryId));
 
+        // Security check: ensure the target directory actually belongs to the user making the request.
         if (!directory.userId.equals(input.userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.");
         }
 
-        // Utilisation de la méthode triée
+        // Fetch all notes contained in the specified directory, sorted alphabetically by name.
         List<DbNotes> entities = notesRepository.findAllByDirectoryIdOrderByNameAsc(input.directoryId);
 
+        // Initialize output container and map database entities to the DTO list.
         GetAllByDirectoriesByUserIdOutput output = new GetAllByDirectoriesByUserIdOutput();
         for (DbNotes entity : entities) {
             output.notes.add(modelMapper.map(entity, GetAllByDirectoriesByUserIdOutput.NoteDto.class));

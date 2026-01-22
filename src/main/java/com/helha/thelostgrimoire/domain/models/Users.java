@@ -8,10 +8,10 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 public class Users {
-    private long id;
-    private String name;
-    private String firstname;
-    private String email_address;
-    private String hash_password;
-    private LocalDateTime created_at;
+    private long id;                        // User identification
+    private String name;                    // Name of the user
+    private String firstname;               // Firstname of the user
+    private String email_address;           // Email address of the user
+    private String hash_password;           // Hashed password
+    private LocalDateTime created_at;       // User creation date
 }

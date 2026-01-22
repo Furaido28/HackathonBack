@@ -21,12 +21,16 @@ public class GetAllNotesHandler implements IQueryHandler<GetAllNotesOutput> {
 
     @Override
     public GetAllNotesOutput handle() {
+        // Retrieve the unique identifier of the currently authenticated user from the security context.
         Long userId = CurrentUserContext.getUserId();
 
+        // Fetch all notes belonging to the user, sorted alphabetically by name in ascending order.
         List<DbNotes> entities = notesRepository.findAllByUserIdOrderByNameAsc(userId);
 
+        // Initialize the response DTO container.
         GetAllNotesOutput output = new GetAllNotesOutput();
 
+        // Map each persistence entity to the output DTO structure and collect them into the result list.
         for (DbNotes entity : entities) {
             output.notes.add(modelMapper.map(entity, GetAllNotesOutput.Note.class));
         }

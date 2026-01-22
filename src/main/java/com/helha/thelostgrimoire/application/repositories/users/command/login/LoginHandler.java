@@ -9,7 +9,7 @@ import com.helha.thelostgrimoire.security.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException; // <--- Import ajouté
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class LoginHandler implements ICommandHandler<LoginInput, String> {
@@ -27,27 +27,32 @@ public class LoginHandler implements ICommandHandler<LoginInput, String> {
 
     @Override
     public String handle(LoginInput input) {
-        // 1. Chercher l'utilisateur (ou échouer avec 401)
+        // 1. User lookup
+        // Attempt to find the user by their email address.
+        // Throw 401 Unauthorized if not found, using a generic message for security (obfuscation).
         DbUsers user = userRepository
                 .findByEmailAddress(input.email)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED, "Email ou mot de passe incorrect"
                 ));
 
-        // 2. Vérifier le mot de passe
+        // 2. Password validation
+        // Compare the raw password from the input with the hashed password stored in the database.
         boolean passwordOk = passwordEncoder.matches(
                 input.password,
                 user.hashPassword
         );
 
         if (!passwordOk) {
-            // 3. Si échec, lancer une 401 explicite
+            // 3. Security failure
+            // If the password hash does not match, throw 401 Unauthorized.
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED, "Email ou mot de passe incorrect"
             );
         }
 
-        // 4. Générer le token
+        // 4. Token generation
+        // Map the database entity to the domain model and generate a signed JWT for the user session.
         Users u = UserMapper.toDomain(user);
         return jwtService.generateToken(u);
     }

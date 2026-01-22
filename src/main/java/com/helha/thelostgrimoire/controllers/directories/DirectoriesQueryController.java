@@ -20,6 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/directories")
 public class DirectoriesQueryController {
+
+    /**
+     * Dependency injection of the query processor to handle data retrieval
+     */
     private final DirectoriesQueryProcessor processor;
 
     public DirectoriesQueryController(DirectoriesQueryProcessor processor) {
@@ -38,6 +42,9 @@ public class DirectoriesQueryController {
     })
     @GetMapping()
     public ResponseEntity<GetAllDirectorieOutput> getAll() {
+        /**
+         * Fetch all existing directories without specific filtering
+         */
         GetAllDirectorieOutput output = processor.getAllHandler.handle();
 
         return ResponseEntity.ok(output);
@@ -56,16 +63,23 @@ public class DirectoriesQueryController {
     @GetMapping("/me")
     public ResponseEntity<GetAllDirectoriesByUserIdOutput> getMyDirectories() {
 
+        /**
+         * Retrieve the ID of the currently authenticated user from the security context
+         */
         long authenticatedUserId = Long.parseLong(
                 SecurityContextHolder.getContext().getAuthentication().getName()
         );
 
+        /**
+         * Initialize the query input with the authenticated user's ID to filter results
+         */
         GetAllDirectoriesByUserIdInput input = new GetAllDirectoriesByUserIdInput();
         input.userId = authenticatedUserId;
 
+        /**
+         * Execute the query to retrieve only the directories belonging to the current user
+         */
         GetAllDirectoriesByUserIdOutput output = processor.getAllDirectoriesByUserIdHandler.handle(input);
         return ResponseEntity.ok(output);
     }
 }
-
-
