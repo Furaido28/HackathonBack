@@ -26,9 +26,8 @@ public class CreateDirectoriesHandler implements ICommandHandler<CreateDirectori
         LocalDateTime now = LocalDateTime.now();
         Long finalParentId = input.parentDirectoryId;
 
-        // 1. Gestion du Parent (La partie critique)
+        // 1. Gestion du Parent
         if (finalParentId != null) {
-            // CAS A : L'utilisateur veut créer un sous-dossier
             DbDirectories parent = repository.findById(finalParentId)
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND, "Parent directory not found"
@@ -41,28 +40,33 @@ public class CreateDirectoriesHandler implements ICommandHandler<CreateDirectori
                 );
             }
         } else {
-            // CAS B : Pas de parent précisé -> On le met dans la RACINE (ROOT)
             DbDirectories rootDir = repository.findByUserIdAndIsRootTrue(input.userId)
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.INTERNAL_SERVER_ERROR,
-                            "Critical Error: User has no root directory. Database corrupted?"
+                            "Critical Error: User has no root directory."
                     ));
             finalParentId = rootDir.id;
         }
 
+        // Vérification des noms
+        boolean duplicateExists = repository.existsByNameAndParentDirectoryIdAndUserId(
+                input.name, finalParentId, input.userId
+        );
+
+        if (duplicateExists) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "A directory with name '" + input.name + "' already exists in this folder."
+            );
+        }
 
         DbDirectories entity = new DbDirectories();
-
         entity.userId = input.userId;
         entity.name = input.name;
-        entity.parentDirectoryId = finalParentId; // On utilise l'ID calculé (Root ou celui demandé)
-
-        // Un dossier créé manuellement n'est jamais root
+        entity.parentDirectoryId = finalParentId;
         entity.isRoot = false;
-
         entity.createdAt = now;
 
-        // Sauvegarde
         DbDirectories savedEntity = repository.save(entity);
         return modelMapper.map(savedEntity, CreateDirectoriesOutput.class);
     }

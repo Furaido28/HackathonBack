@@ -159,6 +159,80 @@ public class DirectoriesCommandControllerIT extends AbstractDirectoriesIT {
                             .content("{}"))
                     .andExpect(status().isForbidden());
         }
+
+        @Nested
+        @DisplayName("POST /api/directories - Unicité du nom")
+        class DirectoryUniqueness {
+
+            @Test
+            @DisplayName("409 - Erreur si doublon dans le même dossier")
+            void createDirectory_duplicateInSameFolder_shouldReturnConflict() throws Exception {
+                // 1. On crée un dossier "Test1" dans la racine (savedRoot est déjà setup)
+                persist(savedUser.id, "Test1", savedRoot.id);
+
+                // 2. On tente d'en créer un deuxième avec le même nom au même endroit
+                String jsonRequest = """
+                    {
+                        "name": "Test1",
+                        "parentDirectoryId": null
+                    }
+                """;
+
+                mockMvc.perform(post("/api/directories")
+                                .cookie(jwtCookie)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonRequest))
+                        .andExpect(status().isConflict()); // 409 Conflict
+            }
+
+            @Test
+            @DisplayName("201 - Succès si même nom mais dossiers parents différents")
+            void createDirectory_sameNameDifferentParent_shouldReturnCreated() throws Exception {
+                // Dossier A
+                DbDirectories folderA = persist(savedUser.id, "Dossier_A", savedRoot.id);
+                // Dossier B
+                DbDirectories folderB = persist(savedUser.id, "Dossier_B", savedRoot.id);
+
+                // Créer "Test1" dans Dossier A
+                persist(savedUser.id, "Test1", folderA.id);
+
+                // Créer "Test1" dans Dossier B (DOIT PASSER)
+                String jsonRequest = """
+                    {
+                        "name": "Test1",
+                        "parentDirectoryId": %d
+                    }
+                """.formatted(folderB.id);
+
+                mockMvc.perform(post("/api/directories")
+                                .cookie(jwtCookie)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonRequest))
+                        .andExpect(status().isCreated())
+                        .andExpect(jsonPath("$.name").value("Test1"));
+            }
+
+            @Test
+            @DisplayName("201 - Succès si même nom pour deux utilisateurs différents")
+            void createDirectory_sameNameDifferentUser_shouldReturnCreated() throws Exception {
+                // Un autre utilisateur a déjà un dossier "Test1"
+                persist(999L, "Test1", null);
+
+                // John Doe veut aussi un dossier "Test1" à sa racine
+                String jsonRequest = """
+                    {
+                        "name": "Test1",
+                        "parentDirectoryId": null
+                    }
+                """;
+
+                mockMvc.perform(post("/api/directories")
+                                .cookie(jwtCookie)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonRequest))
+                        .andExpect(status().isCreated());
+            }
+        }
     }
 
     @Nested
@@ -175,7 +249,7 @@ public class DirectoriesCommandControllerIT extends AbstractDirectoriesIT {
                     "id": %d,
                     "name": "Nouveau nom"
                 }
-                """.formatted(directory.id);
+            """.formatted(directory.id);
 
             mockMvc.perform(put("/api/directories")
                             .cookie(jwtCookie)
@@ -189,7 +263,7 @@ public class DirectoriesCommandControllerIT extends AbstractDirectoriesIT {
         void updateDirectory_otherUser_shouldReturnForbidden() throws Exception {
             DbDirectories otherDir = persist(99L, "Pas à moi", null);
             String jsonRequest = """
-            { "id": %d, "name": "Hack" }
+                { "id": %d, "name": "Hack" }
             """.formatted(otherDir.id);
 
             mockMvc.perform(put("/api/directories")
@@ -203,13 +277,85 @@ public class DirectoriesCommandControllerIT extends AbstractDirectoriesIT {
         @DisplayName("404 - répertoire inexistant")
         void updateDirectory_notFound_shouldReturnNotFound() throws Exception {
             String jsonRequest = """
-            { "id": 9999, "name": "Nouveau" }
+                { "id": 9999, "name": "Nouveau" }
             """;
             mockMvc.perform(put("/api/directories")
                             .cookie(jwtCookie)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonRequest))
                     .andExpect(status().isNotFound());
+        }
+
+        @Nested
+        @DisplayName("PUT /api/directories - Unicité au renommage")
+        class UpdateUniqueness {
+
+            @Test
+            @DisplayName("409 - Erreur si renommage vers un nom déjà existant dans le dossier")
+            void updateDirectory_renameToExisting_shouldReturnConflict() throws Exception {
+                // On a Test1 et Test2 dans le même dossier (racine)
+                persist(savedUser.id, "Test1", savedRoot.id);
+                DbDirectories test2 = persist(savedUser.id, "Test2", savedRoot.id);
+
+                // On tente de renommer Test2 en Test1
+                String jsonRequest = """
+                    {
+                        "id": %d,
+                        "name": "Test1"
+                    }
+                """.formatted(test2.id);
+
+                mockMvc.perform(put("/api/directories")
+                                .cookie(jwtCookie)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonRequest))
+                        .andExpect(status().isConflict());
+            }
+
+            @Test
+            @DisplayName("204 - Succès si on garde le même nom (pas de conflit avec soi-même)")
+            void updateDirectory_keepSameName_shouldReturnNoContent() throws Exception {
+                DbDirectories dir = persist(savedUser.id, "Unique", savedRoot.id);
+
+                String jsonRequest = """
+                    {
+                        "id": %d,
+                        "name": "Unique"
+                    }
+                """.formatted(dir.id);
+
+                mockMvc.perform(put("/api/directories")
+                                .cookie(jwtCookie)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonRequest))
+                        .andExpect(status().isNoContent());
+            }
+
+            @Test
+            @DisplayName("204 - Succès si renommage vers un nom pris ailleurs")
+            void updateDirectory_renameToNameTakenElsewhere_shouldReturnNoContent() throws Exception {
+                // Dossier A contient "Test1"
+                DbDirectories folderA = persist(savedUser.id, "FolderA", savedRoot.id);
+                persist(savedUser.id, "Test1", folderA.id);
+
+                // Dossier B contient "Test2"
+                DbDirectories folderB = persist(savedUser.id, "FolderB", savedRoot.id);
+                DbDirectories test2 = persist(savedUser.id, "Test2", folderB.id);
+
+                // Renommer "Test2" (dans B) en "Test1" -> Possible car parents différents
+                String jsonRequest = """
+                    {
+                        "id": %d,
+                        "name": "Test1"
+                    }
+                """.formatted(test2.id);
+
+                mockMvc.perform(put("/api/directories")
+                                .cookie(jwtCookie)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonRequest))
+                        .andExpect(status().isNoContent());
+            }
         }
     }
 
